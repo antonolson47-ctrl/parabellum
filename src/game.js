@@ -72,7 +72,8 @@ export function initGame() {
   G.onKweepieTeleport = () => { if (Math.random() < 0.3) bark('kweepie', 1); };
   G.setSunrise = f => { if (G.env && G.level && G.level.def.id === 'sequoyah') { G.env.sun.intensity = 1.2 + f * 2.2; G.env.hemi.intensity = 0.6 + f * 0.6; E.renderer.toneMappingExposure = 0.85 + f * 0.35; } };
   // first gesture -> audio
-  const unlock = () => { if (!A.ctx) { initAudio(); setVolumes(S.data.settings.music, S.data.settings.sfx); if (G.mode === 'title' || G.mode === 'menu') playMusic('title'); } };
+  const unlock = () => { try { if (!A.ctx) { initAudio(); setVolumes(S.data.settings.music, S.data.settings.sfx); if (G.mode === 'title' || G.mode === 'menu') playMusic('title'); } else if (A.ctx.state !== 'running') { const r = A.ctx.resume(); r && r.catch && r.catch(() => { }); } } catch (e) { console.warn('audio unlock', e); } };
+  addEventListener('touchend', unlock, true);
   addEventListener('pointerdown', unlock, true); addEventListener('keydown', unlock, true);
   document.addEventListener('visibilitychange', () => { if (document.hidden) { if (G.mode === 'play') pause(true); suspendAudio(true); } else suspendAudio(false); });
   addEventListener('resize', () => { if (H.phint) H.phint.style.display = 'none'; });
@@ -109,7 +110,11 @@ function renderTitle(dt) {
 // ───────────────────────────── screens
 function screen(html, cls = '') { H.screens.innerHTML = html ? `<div class="screen ${cls}">${html}</div>` : ''; return H.screens.firstChild; }
 const $s = id => H.screens.querySelector('#' + id);
-const onClick = (id, f) => { const e = $s(id); if (e) e.addEventListener('click', e2 => { e2.stopPropagation(); sfx('click'); f(); }); };
+// menu taps: sound can never block the action; errors surface on the on-screen overlay instead of failing silently
+const safe = (f, tag) => { try { const r = f(); if (r && r.catch) r.catch(e => reportErr(tag, e)); } catch (e) { reportErr(tag, e); } };
+const reportErr = (tag, e) => { console.error(tag, e); (window.__PB_ERRORS || []).push(tag + ': ' + (e && (e.stack || e.message) || e)); window.__PBshowErr && window.__PBshowErr(tag + ': ' + (e && e.message || e)); };
+const tapSfx = () => { try { sfx('click'); } catch (e) { } };
+const onClick = (id, f) => { const e = $s(id); if (e) e.addEventListener('click', e2 => { e2.stopPropagation(); tapSfx(); safe(f, 'button ' + id); }); };
 function haulLine() { return `<span>${FINGER}${S.data.fingers}</span><span>🍔 ${S.data.burgers}/120</span><span>🥤 ${S.data.cokes}/120</span>`; }
 export function titleScreen() {
   G.mode = 'title'; showHUD(false); I.enabled = false; if (document.exitPointerLock && document.pointerLockElement) document.exitPointerLock(); if (A.ctx) playMusic('title');
@@ -124,7 +129,7 @@ function shiftsScreen() {
   G.mode = 'menu';
   const cards = LEVELS.map((L, i) => `<div class="lvl ${i > S.data.unlocked ? 'lock' : ''} ${S.data.completed.includes(i) ? 'done' : ''}" data-i="${i}"><div class="s">${L.shift}</div><div class="n">${L.name}</div><div class="m">${i > S.data.unlocked ? '🔒 Locked' : S.data.completed.includes(i) ? '✔ Cleared · replay for more food' : L.obj}</div></div>`).join('');
   screen(`<div class="panel" style="background:rgba(8,10,12,.8)"><h3>SHIFTS</h3><div class="lvlgrid">${cards}</div><div class="shopfoot"><button class="b alt small" id="sback">BACK</button></div></div>`, 'title');
-  H.screens.querySelectorAll('.lvl').forEach(el => el.addEventListener('click', () => { sfx('click'); startLevel(+el.dataset.i); }));
+  H.screens.querySelectorAll('.lvl').forEach(el => el.addEventListener('click', () => { tapSfx(); safe(() => startLevel(+el.dataset.i), 'shift'); }));
   onClick('sback', titleScreen);
 }
 function settingsScreen(back) {
@@ -161,7 +166,7 @@ function shopScreen(back, nextLabel) {
       return `<div class="item ${owned ? 'owned' : ''}">${shopIcon(it)}<div class="n">${it.name}</div><div class="d">${it.desc}</div><div class="lv">${it.cat}${max > 1 ? ` · Lv ${lvl}/${max}` : ''}</div><button class="buybtn" data-id="${it.id}" ${owned || S.data.fingers < cost ? 'disabled' : ''}>${owned ? 'OWNED' : `${FINGER} ${cost}`}</button></div>`;
     }).join('');
     screen(`<div class="shop"><div class="hd"><h3>VENDY'S VENDING EMPORIUM</h3><div class="vendy">“${pick(VENDY)}”</div><div class="fing">${FINGER}<span>${S.data.fingers}</span></div></div><div class="grid">${cards}</div><div class="shopfoot"><button class="b small" id="shopgo">${nextLabel || 'BACK'}</button></div></div>`);
-    H.screens.querySelectorAll('.buybtn').forEach(b => b.addEventListener('click', () => buy(b.dataset.id)));
+    H.screens.querySelectorAll('.buybtn').forEach(b => b.addEventListener('click', () => safe(() => buy(b.dataset.id), 'buy')));
     onClick('shopgo', back);
   };
   const buy = id => {

@@ -109,3 +109,9 @@ kweepie, pickups, kennedy, props, levels (9 builders), bosses, story (cutscenes 
 - Shop cards show icons rendered from the 3D models (cached data URLs). Kennedy's world rifle uses the same AR model.
 - Fixed an old bug: bullet tracers pointed backward from the muzzle.
 - Screenshots: screenshots/guns/before_* and after_* (pistol/AR idle, fire, reload; Kennedy; shop icons). Lab: dev/guns.html + test/lab.cjs.
+
+## URGENT fix: title/menu buttons dead on phones (11:30 CT)
+- Root cause: a CSS specificity bug. `#ui *{pointer-events:none}` (ID selector) beat `.screen *{pointer-events:auto}`, so every menu (title, Shifts, Vendy's, Settings, pause, results, cinematics) ignored touches and mouse clicks, which fell through to the full-screen #touch layer. Earlier automated tests used scripted `.click()`/hooks, so they missed it.
+- Fix: `#ui .screen, #ui .screen *, #ui .cine, #ui .cine *{pointer-events:auto}` plus touch-action:manipulation on buttons.
+- Hardening: menu handlers wrapped (sound can't block the action; errors are reported); audio unlock/resume in try/catch (+ touchend unlock for iOS); on-screen error overlay inlined in <head> (window error + unhandledrejection); the loading screen shows a failure message + RETRY instead of hanging, and a slow-load hint after 45 s; asset fetches carry a ?v=build version (stale-cache safe); fallback for createImageBitmap on older iOS. There are no fullscreen/orientation-lock calls and no service worker.
+- New regression test: test/taptest.cjs drives real touchscreen taps (hasTouch/isMobile) and checks elementFromPoint at each button.

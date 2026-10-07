@@ -24,9 +24,12 @@ def page(pre):
 </head><body>
 <script>{js}</script>
 </body></html>'''
-open('dist/index.html', 'w').write(page("window.__PB_ASSET_BASE='assets/';"))
+import time
+ver = time.strftime('%Y%m%d%H%M%S')
+erroverlay = open('src/erroverlay.js').read()
+open('dist/index.html', 'w').write(page(erroverlay + "window.__PB_VER='" + ver + "';window.__PB_ASSET_BASE='assets/';"))
 blob = {a: base64.b64encode(open('build_assets/' + a, 'rb').read()).decode() for a in assets}
-open('dist/Parabellum.html', 'w').write(page('window.__PB_ASSETS=' + json.dumps(blob) + ';'))
+open('dist/Parabellum.html', 'w').write(page(erroverlay + 'window.__PB_ASSETS=' + json.dumps(blob) + ';'))
 PY
 rm dist/game.js
 echo "built dist/index.html ($(wc -c < dist/index.html) bytes) + dist/assets ($(du -sh dist/assets | cut -f1)), dist/Parabellum.html ($(wc -c < dist/Parabellum.html) bytes)"

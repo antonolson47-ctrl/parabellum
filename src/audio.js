@@ -3,7 +3,7 @@ import { mulberry } from './util.js';
 export const A = { ctx: null, on: false, musicVol: 0.55, sfxVol: 0.9, intensity: 0.3 };
 let noiseBuf, master, musicBus, sfxBus, guitarBus, comp;
 export function initAudio() {
-  if (A.ctx) { if (A.ctx.state === 'suspended') A.ctx.resume(); return; }
+  if (A.ctx) { if (A.ctx.state === 'suspended') { try { const r = A.ctx.resume(); r && r.catch && r.catch(() => { }); } catch (e) { } } return; }
   const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
   const ctx = A.ctx = new AC();
   comp = ctx.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 4; comp.attack.value = 0.004; comp.release.value = 0.2; comp.connect(ctx.destination);
@@ -18,7 +18,7 @@ export function initAudio() {
   A.on = true; setInterval(schedule, 25);
 }
 export function setVolumes(m, s) { A.musicVol = m; A.sfxVol = s; if (musicBus) { musicBus.gain.value = m; sfxBus.gain.value = s; } }
-export function suspendAudio(on) { if (!A.ctx) return; if (on) A.ctx.suspend(); else A.ctx.resume(); }
+export function suspendAudio(on) { if (!A.ctx) return; try { const r = on ? A.ctx.suspend() : A.ctx.resume(); r && r.catch && r.catch(() => { }); } catch (e) { } }
 const now = () => A.ctx.currentTime;
 function env(g, t, a, peak, dcy, sus = 0, rel = 0.05, dur = 0) { g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(Math.max(0.0001, sus || 0.0001), t + a + dcy); if (dur) { g.gain.setValueAtTime(Math.max(0.0001, sus || 0.0001), t + dur); g.gain.exponentialRampToValueAtTime(0.0001, t + dur + rel); } }
 function noise(t, dur, type, freq, q, peak, dest, a = 0.001, rate = 1) {

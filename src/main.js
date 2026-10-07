@@ -23,4 +23,8 @@ async function boot() {
   document.getElementById('boot').remove();
   document.title = 'PARABELLUM';
 }
-boot().catch(e => { console.error(e); window.__PB_ERRORS.push('boot: ' + (e.stack || e.message)); document.title = 'ERR ' + e.message; });
+function bootMsg(html) { const b = document.getElementById('boot'); if (!b) return; let m = document.getElementById('bootmsg'); if (!m) { m = document.createElement('div'); m.id = 'bootmsg'; m.style.cssText = 'margin-top:14px;max-width:86vw;font:600 15px/1.35 system-ui,-apple-system,sans-serif;color:#ffd0c8;text-align:center'; b.appendChild(m); } m.innerHTML = html; }
+const retryBtn = '<br><button onclick="location.reload()" style="margin-top:10px;font:700 16px system-ui;padding:9px 18px;border-radius:10px;border:2px solid #ff9a8a;background:#a3170f;color:#fff">RETRY</button>';
+const slow = setTimeout(() => bootMsg('Still loading… on a slow connection this can take a minute.' + retryBtn), 45000);
+boot().then(() => clearTimeout(slow)).catch(e => { clearTimeout(slow); console.error(e); window.__PB_ERRORS.push('boot: ' + (e.stack || e.message)); document.title = 'ERR ' + e.message;
+  bootMsg('The game failed to load: ' + String(e && e.message || e).replace(/</g, '&lt;') + retryBtn); window.__PBshowErr && window.__PBshowErr('boot: ' + (e && e.message || e)); });

@@ -5,6 +5,10 @@ html,body{margin:0;height:100%;overflow:hidden;background:#000;color:#fff;oversc
 #ui{position:fixed;inset:0;pointer-events:none}
 #ui *{pointer-events:none}
 #ui .pe,#ui .pe *{pointer-events:auto}
+/* menus + cinematics are interactive. Must use #ui-scoped selectors: a bare .screen * loses to #ui * on specificity, which made every menu ignore taps */
+#ui .screen,#ui .screen *,#ui .cine,#ui .cine *{pointer-events:auto}
+#ui .screen button,#ui .lvl,#ui .buybtn{touch-action:manipulation;-webkit-tap-highlight-color:rgba(255,255,255,.15);-webkit-user-select:none;user-select:none}
+#ui button:disabled{opacity:.55;filter:grayscale(.6)}
 #touch{position:absolute;inset:0;pointer-events:auto;touch-action:none}
 .hud{position:absolute;inset:0;font-family:'Teko',sans-serif;letter-spacing:.5px}
 .hud.hidden{display:none}
