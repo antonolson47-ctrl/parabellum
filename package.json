@@ -1,0 +1,1 @@
+{"name":"parabellum","private":true,"type":"module","version":"1.0.0","dependencies":{"esbuild":"^0.24.0","three":"^0.170.0"}}
