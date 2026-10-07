@@ -115,3 +115,12 @@ kweepie, pickups, kennedy, props, levels (9 builders), bosses, story (cutscenes 
 - Fix: `#ui .screen, #ui .screen *, #ui .cine, #ui .cine *{pointer-events:auto}` plus touch-action:manipulation on buttons.
 - Hardening: menu handlers wrapped (sound can't block the action; errors are reported); audio unlock/resume in try/catch (+ touchend unlock for iOS); on-screen error overlay inlined in <head> (window error + unhandledrejection); the loading screen shows a failure message + RETRY instead of hanging, and a slow-load hint after 45 s; asset fetches carry a ?v=build version (stale-cache safe); fallback for createImageBitmap on older iOS. There are no fullscreen/orientation-lock calls and no service worker.
 - New regression test: test/taptest.cjs drives real touchscreen taps (hasTouch/isMobile) and checks elementFromPoint at each button.
+
+## Oct 7 fixes: slower/warmer Kelly intro + accidental zoom (started 11:50 CT)
+- Step 0: read code. Intro = `CINES.intro` in src/story.js (tap-to-advance already, but auto-advance was 2.4 s + 0.05 s/char, so short lines flew by). No in-game ADS/FOV zoom exists (camera FOV only changes in engine resize()), so the "zoom" is iOS Safari page zoom (pinch/double-tap; iOS ignores user-scalable=no, and the game's preventDefault on *pointer* events doesn't stop gestures). Accidental look-drags can also leave pitch pointed at floor/ceiling.
+- Plan: rewrite intro (more surprise lines, laundry/cleaning goodbye before the outbreak), min ~4.5 s/line + tap debounce; anti-zoom touch/gesture handlers; RESET VIEW button; extend taptest.
+- Step 1 (done): intro rewritten (src/story.js), pacing max(4.5s, 2.2+0.06/char) + 0.6s tap debounce, introV=2 flag. src/antizoom.js added; RESET VIEW button (#resetv) + resetView() in game.js; clearTouches() in input.js. Built OK.
+- Step 2: test/taptest.cjs extended (old copy test/taptest_v1.cjs.bak). Local server: python http.server 8765 in dist/.
+- Step 3 (done, ~12:25 CT): local dist tests all green — iPhone 13 portrait WebKit 24/24, iPhone 13 landscape WebKit 24/24, Pixel 7 Chromium 28/28 (incl. real CDP two-finger pinch + synthesizePinchGesture: scale stays 1; shop list still one-finger scrolls; RESET restores FOV 22->default and pitch -1.1->0). 0 console errors. Test fix: tapEl scrolls the Settings DONE button into view in landscape.
+- Screenshots: screenshots/fix_oct7/01_kelly_surprise_line.png, 02_kelly_laundry_goodbye.png, 03_gameplay_portrait_reset_button.png.
+- Step 4: publishing via make_pages.sh -> ../parabellum-pages, commit + push.

@@ -89,11 +89,21 @@ const SETS = {
 const SH = { x: 0, z: 0 };
 export const CINES = {
   intro: [
-    { set: 'station', card: ['OZARK MERCY REGIONAL', 'Night shift · 6:58 PM · two days before the family reunion'], cast: { shayla: [-0.2, -1.6, 0.15, 'Idle_Loop'], kelly: [1.0, 0.25, -2.6, 'Idle_Talking_Loop'], doll: [0.45, -0.8, 0.25] }, cam: { pos: [-2.2, 1.7, 2.6], pos2: [-1.7, 1.6, 2.0], look: [0.3, 1.2, -0.7] }, lines: [['KELLY', 'Surprise! I found you something at an estate sale!']] },
-    { cam: { close: 'doll', dist: 0.55, side: -0.05, h: 0.02 }, lines: [['KELLY', "Her name's Kweepie! The lady said she's 'a little bit cursed,' but I got her down to four dollars."], ['KWEEPIE', '...hee hee hee.']], fx: 'giggle' },
-    { cam: { close: 'shayla', dist: 0.75, side: 0.18 }, talk: 'shayla', lines: [['SHAYLA', 'Kelly. Why the fuck does it have red eyes.'], ['SHAYLA', "I'm not a hero. I'm a nurse with a twelve-hour shift and zero fucks left. Take your haunted doll and—"]] },
-    { cam: { pos: [2.4, 1.5, 1.8], pos2: [2.1, 1.45, 1.5], look: [0.0, 1.2, -0.9] }, fx: 'flicker', lines: [['INTERCOM', 'Code... Code Brown. All floors. Code Brown. Oh God, it’s biting—'], ['KWEEPIE', 'HEE HEE HEE HEE.']] },
-    { cam: { close: 'kelly', dist: 0.8, side: -0.15 }, talk: 'kelly', lines: [['KELLY', "Okay! I'm gonna go! Love you! Don't let her out of the cooler!"]] },
+    // Kelly drops by with a surprise. Slow, warm, then the goodbye (laundry + cleaning), THEN the outbreak.
+    { set: 'station', card: ['OZARK MERCY REGIONAL', 'Night shift · 6:58 PM · two days before the family reunion'], cast: { shayla: [-0.2, -1.6, 0.15, 'Idle_Loop'], kelly: [1.0, 0.25, -2.6, 'Idle_Talking_Loop'] }, cam: { pos: [-2.2, 1.7, 2.6], pos2: [-1.7, 1.6, 2.0], look: [0.3, 1.2, -0.7] }, lines: [['KELLY', "Knock knock! Don't mind me, I'm just dropping by real quick. I brought you a little surprise!"], ['SHAYLA', 'Kelly! Hi! You drove all the way out here? I clock in in two minutes.']] },
+    { cam: { close: 'kelly', dist: 0.8, side: -0.15 }, talk: 'kelly', lines: [['KELLY', "I know, I know. But you've been working so hard, and when I saw her I thought, 'Oh, Shayla NEEDS this.'"]] },
+    { cam: { close: 'shayla', dist: 0.75, side: 0.18 }, talk: 'shayla', lines: [['SHAYLA', "Aww, Kelly. You didn't have to get me anything."]] },
+    { cam: { close: 'kelly', dist: 0.8, side: -0.15 }, talk: 'kelly', lines: [['KELLY', "Hush. Okay, close your eyes... no peeking... ta-daaa!"]] },
+    { cast: { shayla: [-0.2, -1.6, 0.15, 'Idle_Loop'], kelly: [1.0, 0.25, -2.6, 'Idle_Talking_Loop'], doll: [0.45, -0.8, 0.25] }, cam: { close: 'doll', dist: 0.55, side: -0.05, h: 0.02 }, lines: [['KELLY', "Her name's Kweepie! Found her at an estate sale. The lady said she's 'a little bit cursed,' but I got her down to four dollars."], ['KWEEPIE', '...hee hee hee.'], ['KELLY', 'And I sewed her a teeny pair of scrubs so you two match!']], fx: 'giggle' },
+    { cam: { close: 'shayla', dist: 0.75, side: 0.18 }, talk: 'shayla', lines: [['SHAYLA', 'Kelly. Why the fuck does it have red eyes.']] },
+    { cam: { close: 'kelly', dist: 0.8, side: -0.15 }, talk: 'kelly', lines: [["KELLY", "That's called CHARACTER, sweetie. She'll keep you company on the night shift."]] },
+    { cam: { close: 'shayla', dist: 0.75, side: 0.18 }, talk: 'shayla', lines: [['SHAYLA', "Okay... that's honestly really sweet. Weird as hell. But sweet. Thank you, Kelly."]] },
+    { cam: { close: 'kelly', dist: 0.8, side: -0.15 }, talk: 'kelly', lines: [['KELLY', "Oh, you're so welcome, honey! The lady did say keep her in a cooler at night. I didn't ask."], ['KELLY', "Well, I'd better scoot. I've got a mountain of laundry waiting at home, and that house isn't gonna clean itself!"]] },
+    { cam: { close: 'shayla', dist: 0.75, side: 0.18 }, talk: 'shayla', lines: [['SHAYLA', 'Go, go! Thanks for stopping by. Love you, drive safe!']] },
+    { cam: { pos: [-2.2, 1.7, 2.6], pos2: [-1.9, 1.65, 2.3], look: [0.3, 1.2, -0.7] }, lines: [['KELLY', "Love you too! Have a good shift! Don't let her out of the cooler!"]] },
+    // Kelly has left: only Shayla and the doll remain. Now the outbreak starts.
+    { cast: { shayla: [-0.2, -1.6, 0.15, 'Idle_Loop'], doll: [0.45, -0.8, 0.25] }, cam: { pos: [2.4, 1.5, 1.8], pos2: [2.1, 1.45, 1.5], look: [0.0, 1.2, -0.9] }, fx: 'flicker', lines: [['INTERCOM', 'Code... Code Brown. All floors. Code Brown. Oh God, it’s biting—'], ['KWEEPIE', 'HEE HEE HEE HEE.']] },
+    { cam: { close: 'shayla', dist: 0.75, side: 0.18 }, talk: 'shayla', lines: [['SHAYLA', "Oh, you have GOT to be fucking kidding me."], ['SHAYLA', "I'm not a hero. I'm a nurse with a twelve-hour shift and zero fucks left."]] },
     { cam: { close: 'shayla', dist: 0.62, side: -0.12 }, talk: 'shayla', anim: { shayla: 'Pistol_Idle_Loop' }, lines: [['SHAYLA', 'Glock’s in the drawer. Fine. Let’s clock in, motherfuckers.']], card: ['PARABELLUM', 'If you want peace, prepare for war.'] },
   ],
   kellyCall: [
@@ -134,12 +144,14 @@ export const CINES = {
 const C = { active: false };
 const fw = { pts: null, n: 700 };
 export function cineActive() { return C.active; }
+export function cineInfo() { return C.active ? { name: C.name, shot: C.i, line: C.li, who: C.lineWho, txt: C.lineTxt, lineT: C.lineT } : null; }
 export function playCine(name) {
   return new Promise(res => {
     const script = CINES[name]; C.active = true; C.script = script; C.i = -1; C.res = res; C.scene = new THREE.Scene(); C.cam = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 0.03, 200); C.setName = null; C.W = null; C.name = name;
     const el = document.createElement('div'); el.className = 'cine'; el.innerHTML = `<div class="bars"></div><div class="card" id="cinecard"></div><div class="line" id="cineline"><div class="who"></div><div class="txt"></div></div><div class="b small alt skip" id="cineskip">SKIP ▸▸</div><div class="tap">tap ▸</div>`;
     H.screens.appendChild(el); C.el = el;
-    el.addEventListener('pointerdown', e => { if (e.target.id === 'cineskip') { finish(); return; } advance(); });
+    // tap advances one line; ignore taps in the first 0.6 s of a line so a double-tap can't skip two lines
+    el.addEventListener('pointerdown', e => { if (e.target.id === 'cineskip') { finish(); return; } if (performance.now() - (C.lineAt || 0) < 600) return; advance(); });
     C.onKey = e => { if (e.code === 'Space' || e.code === 'Enter') advance(); if (e.code === 'Escape') finish(); }; addEventListener('keydown', C.onKey);
     nextShot();
   });
@@ -185,7 +197,8 @@ function advance() {
   const s = C.shot; if (!s) return; C.li++;
   if (C.li >= s.lines.length) { nextShot(); return; }
   const [who, txt] = s.lines[C.li]; const ln = C.el.querySelector('#cineline'); ln.querySelector('.who').textContent = who; ln.querySelector('.who').style.color = COLORS[who] || '#fff'; ln.querySelector('.txt').textContent = txt;
-  C.lineT = 2.4 + txt.length * 0.05; C.autoT = C.lineT;
+  // readable on a phone: at least 4.5 s per line (longer lines get more), tap to advance sooner
+  C.lineT = Math.max(4.5, 2.2 + txt.length * 0.06); C.autoT = C.lineT; C.lineAt = performance.now(); C.lineWho = who; C.lineTxt = txt;
   if (who === 'KWEEPIE') sfx('giggle', null, 0.9);
   if (s.talk === undefined) { const k = who.toLowerCase(); if (C.shotCast[k] && !actor(k).doll && !s.dance) actor(k).play('Idle_Talking_Loop', 0.3); }
 }

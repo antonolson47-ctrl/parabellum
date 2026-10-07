@@ -43,7 +43,8 @@ export function initInput(uiRoot) {
   });
   addEventListener('keyup', e => { I.keys[e.code] = false; if (e.code === 'Space') I.fire = false; });
   addEventListener('wheel', e => { if (I.enabled) I.pressed.swap = true; }, { passive: true });
-  addEventListener('blur', () => { I.fire = false; I.move.x = I.move.y = 0; for (const k in I.keys) I.keys[k] = false; ptrs.clear(); });
+  addEventListener('blur', () => { I.fire = false; I.move.x = I.move.y = 0; for (const k in I.keys) I.keys[k] = false; clearTouches(); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) { I.fire = false; for (const k in I.keys) I.keys[k] = false; clearTouches(); } });
   placeStickHome();
   addEventListener('resize', placeStickHome);
 }
@@ -71,4 +72,8 @@ export function pollKeyboard() {
 }
 export function consumeLook() { const r = [I.lookDX, I.lookDY]; I.lookDX = I.lookDY = 0; return r; }
 export function consumePressed() { const p = I.pressed; I.pressed = {}; return p; }
+export function clearTouches() { // no finger on the glass -> nothing can still be held (fixes stuck stick/look/fire)
+  ptrs.clear(); I.move.x = I.move.y = 0; I.sprint = false; if (stickEl) { stickEl.classList.remove('on'); if (knobEl) knobEl.style.transform = ''; placeStickHome(); }
+  if (I.touchMode) I.fire = false; document.querySelectorAll('#ui .btn.down').forEach(b => b.classList.remove('down'));
+}
 export function resetInput() { I.fire = false; I.move.x = I.move.y = 0; I.lookDX = I.lookDY = 0; I.pressed = {}; ptrs.clear(); if (stickEl) { stickEl.classList.remove('on'); if (knobEl) knobEl.style.transform = ''; } }

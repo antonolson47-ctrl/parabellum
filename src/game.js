@@ -1,9 +1,10 @@
 // Game flow: title, shifts, level lifecycle, spawn director, Kennedy call-in, bosses, pickups, barks, results, Vendy's shop, endings.
 import * as THREE from 'three';
 import { gunIcon, upgradeCfg } from './guns.js';
-import { E, render, trackFrame, setQuality, QUALITY } from './engine.js';
+import { E, render, trackFrame, setQuality, QUALITY, resize } from './engine.js';
+import { initAntiZoom, resetPageZoom, pageScale, ZOOM } from './antizoom.js';
 import { G } from './state.js';
-import { I, initInput, bindButton, pollKeyboard, resetInput } from './input.js';
+import { I, initInput, bindButton, pollKeyboard, resetInput, clearTouches } from './input.js';
 import { H, FINGER, buildHUD, showHUD, say, toast, rule, float, hitMarker, bump, hudTick, project, setText, setStyle, clearHudCache } from './hud.js';
 import { World, T, clearMats } from './world.js';
 import { LEVELS } from './levels.js';
@@ -19,7 +20,7 @@ import { BARKS, KENNEDY, RULES } from './text.js';
 import { WEAPONS, ORDER } from './weapons.js';
 import { makeCharacter, makeZombie } from './chars.js';
 import { makeKweepie } from './kweepie.js';
-import { playCine, cineActive, cineTick, actor } from './story.js';
+import { playCine, cineActive, cineTick, actor, cineInfo } from './story.js';
 import { bag, rand, randi, pick, clamp, lerp, angDiff } from './util.js';
 
 const tmp = new THREE.Vector3(), tmp2 = new THREE.Vector3();
@@ -56,6 +57,8 @@ export function initGame() {
   bindButton(document.getElementById('bmelee'), () => { I.pressed.melee = true; });
   bindButton(H.autofire, () => { S.data.settings.autofire = !S.data.settings.autofire; save(); });
   bindButton(document.getElementById('pausebtn'), () => pause(true));
+  bindButton(H.resetv, () => resetView(true));
+  initAntiZoom({ onAllUp: clearTouches, onReset: () => resetView(true), autoOk: () => true });
   // hooks
   G.onKill = onKill; G.onGib = () => { S.data.stats.gibs++; bark('gib', 1, 0.45); };
   G.onSnatch = z => { bark('snatch', 2); toast('BURGER THIEF!', `-${z.carry} 🍔 · kill him to get them back`, 2.6, true); };
@@ -222,7 +225,7 @@ export async function startLevel(i) {
   render(); for (const z of Z.list) { z.root.visible = false; }
   bar(1); await nextFrame();
   // story beats
-  if (i === 0 && !S.data.seenIntro) { await runCine('intro'); S.data.seenIntro = true; save(); }
+  if (i === 0 && (S.data.introV || 0) < 2) { await runCine('intro'); S.data.seenIntro = true; S.data.introV = 2; save(); } // introV 2 = Oct 7 rewrite (plays once more for players who saw v1)
   if (i === 1 && !S.data.seenCall) { await runCine('kellyCall'); S.data.seenCall = true; save(); }
   if (L.id === 'home') { G.kennedy.arrive({ x: anc.kennedy.x, z: anc.kennedy.z }, anc.start.yaw); G.level.kennedyCalled = true; }
   screen(''); showHUD(true); applySettings(); G.mode = 'play'; I.enabled = true; dirT = 1.5;
@@ -346,6 +349,13 @@ function pause(on) {
     draw();
   } else { screen(''); G.mode = 'play'; I.enabled = true; }
 }
+// RESET VIEW: undo page zoom, restore the default FOV, re-level the camera, clear any stuck touches
+export function resetView(fromTap) {
+  clearTouches(); I.lookDX = I.lookDY = 0; I.fire = false;
+  resetPageZoom(); resize(); // resize() recomputes the default (aspect-based) FOV
+  if (G.player) { G.player.pitch = 0; G.player.kick = 0; G.player.shake = 0; }
+  if (fromTap && G.mode === 'play') toast('VIEW RESET', 'Zoom cleared · camera leveled', 1.2);
+}
 // ───────────────────────────── per-frame
 function frame(dt) {
   if (cineActive()) { cineTick(dt); hudTick(dt); trackFrame(dt); return; }
@@ -425,6 +435,6 @@ function testHooks() {
     hurtBoss(f = 0.5) { const b = G.level && G.level.boss; if (!b) return; if (b.z) { b.z.invuln = false; if (b.orbs) b.orbs.forEach(o => o.damage(9999)); b.z.damage(b.z.maxHp * f, 'chest', null, null, 'test'); } else b.damage(b.maxHp * f, 'chest', null, null); },
     spawn(beh = 'walker', x, z, opt = {}) { const zz = freeZombie(); if (zz) zz.spawn(new THREE.Vector3(x, 0, z), beh, opt); return !!zz; }, noDirector(on = true) { G.noDirector = on; },
     tp(x, z) { G.player.pos.set(x, 0, z); }, look(yaw, pitch = 0) { G.player.yaw = yaw; G.player.pitch = pitch; },
-    cine: name => runCine(name), pause, callKennedy, levelComplete, fast(on) { G.fast = on; }, substeps(n) { G.substeps = n; }, timeScale(n) { G.timeScale = n; }, step(dt = 1 / 60, n = 1) { for (let i = 0; i < n; i++) update(dt); }, shoot() { const pl = G.player, k = pl.weapon; pl.fire(pl.wstats(k), k); pl.cool = pl.wstats(k).rate; },
+    cine: name => runCine(name), cineInfo, resetView, ZOOM, pageScale, defaultFov() { const f = E.camera.fov; resize(); const d = E.camera.fov; E.camera.fov = f; E.camera.updateProjectionMatrix(); return d; }, forceZoom(fov = 25) { E.camera.fov = fov; E.camera.updateProjectionMatrix(); return E.camera.fov; }, camFov: () => E.camera.fov, pause, callKennedy, levelComplete, fast(on) { G.fast = on; }, substeps(n) { G.substeps = n; }, timeScale(n) { G.timeScale = n; }, step(dt = 1 / 60, n = 1) { for (let i = 0; i < n; i++) update(dt); }, shoot() { const pl = G.player, k = pl.weapon; pl.fire(pl.wstats(k), k); pl.cool = pl.wstats(k).rate; },
   };
 }

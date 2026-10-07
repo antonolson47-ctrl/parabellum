@@ -1,8 +1,8 @@
 export const CSS = `
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%;overflow:hidden;background:#000;color:#fff;overscroll-behavior:none;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;font-family:'Barlow Condensed',sans-serif}
-#c{position:fixed;inset:0;display:block}
-#ui{position:fixed;inset:0;pointer-events:none}
+html,body{margin:0;height:100%;overflow:hidden;-webkit-text-size-adjust:100%;text-size-adjust:100%;background:#000;color:#fff;overscroll-behavior:none;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;font-family:'Barlow Condensed',sans-serif}
+#c{position:fixed;inset:0;display:block;touch-action:none}
+#ui{position:fixed;inset:0;pointer-events:none;touch-action:none}
 #ui *{pointer-events:none}
 #ui .pe,#ui .pe *{pointer-events:auto}
 /* menus + cinematics are interactive. Must use #ui-scoped selectors: a bare .screen * loses to #ui * on specificity, which made every menu ignore taps */
@@ -64,6 +64,9 @@ html,body{margin:0;height:100%;overflow:hidden;background:#000;color:#fff;oversc
 .chip.bump{animation:bump .35s}@keyframes bump{40%{transform:scale(1.25);border-color:#ffd84a}}
 .pausebtn{position:absolute;right:calc(14px + env(safe-area-inset-right));top:calc(10px + env(safe-area-inset-top));width:34px;height:34px;border-radius:8px;background:rgba(10,10,12,.6);border:1.5px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;gap:4px}
 .pausebtn i{width:4px;height:13px;background:#fff;border-radius:1px}
+.resetv{position:absolute;right:calc(14px + env(safe-area-inset-right));top:calc(52px + env(safe-area-inset-top));height:30px;padding:0 8px 0 6px;border-radius:8px;background:rgba(10,10,12,.62);border:1.5px solid rgba(255,216,74,.7);display:flex;align-items:center;gap:4px;font-family:'Barlow Condensed';font-weight:800;font-size:13px;letter-spacing:1px;color:#ffe9a0;touch-action:none;box-shadow:0 0 8px rgba(0,0,0,.5)}
+.resetv.down{transform:scale(.92);filter:brightness(1.4)}
+html.pagezoomed .resetv{background:#c8231d;border-color:#ffd84a;color:#fff;animation:callp .8s infinite}
 .xh{position:absolute;left:50%;top:50%;width:28px;height:28px;margin:-14px 0 0 -14px;transition:transform .05s}
 .xh:before,.xh:after{content:"";position:absolute;background:rgba(255,255,255,.92);box-shadow:0 0 3px #000}
 .xh:before{left:13px;top:0;width:2px;height:28px;clip-path:polygon(0 0,100% 0,100% 35%,0 35%,0 65%,100% 65%,100% 100%,0 100%)}
@@ -141,6 +144,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#000;color:#fff;oversc
  .obj{top:calc(96px + env(safe-area-inset-top))}
  .obj .t{font-size:13px}.obj .s{font-size:13px}.prog{width:160px}
  .res{top:calc(62px + env(safe-area-inset-top));right:calc(8px + env(safe-area-inset-right));gap:4px}
+ .resetv{top:calc(96px + env(safe-area-inset-top));right:calc(8px + env(safe-area-inset-right))}
  .chip{font-size:14px;padding:0 6px 0 4px}
  .monitor{width:132px}.monitor .row{font-size:13px;white-space:nowrap}.port{width:38px;height:38px}
  .vitals{top:calc(8px + env(safe-area-inset-top))}

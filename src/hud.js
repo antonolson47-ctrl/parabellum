@@ -18,6 +18,7 @@ export function buildHUD(root) {
   <div class="boss" id="boss"><div class="n" id="bossn"></div><div class="bar"><div id="bossv"></div></div></div>
   <div class="res"><div class="chip" id="chipf">${FINGER}<span id="fingers">0</span></div><div class="chip" id="chipb"><span class="e">🍔</span><span id="burgers">0/120</span></div><div class="chip" id="chipc"><span class="e">🥤</span><span id="cokes">0/120</span></div></div>
   <div class="pausebtn pe" id="pausebtn"><i></i><i></i></div>
+  <div class="resetv pe" id="resetv" title="Reset view (zoom + camera)"><svg viewBox="0 0 24 24" width="17" height="17"><circle cx="10" cy="10" r="6.2" fill="none" stroke="#fff" stroke-width="2.2"/><path d="M14.6 14.6l6 6" stroke="#fff" stroke-width="2.8" stroke-linecap="round"/><path d="M10 6.6v6.8M6.6 10h6.8" stroke="#ffd84a" stroke-width="1.8"/></svg><span>RESET</span></div>
   <div class="xh" id="xh"></div><div class="hitm" id="hitm"></div>
   <div class="lock" id="lock"><i></i><i></i><i></i><i></i></div>
   <div class="marker" id="marker">EXIT</div>
@@ -34,7 +35,7 @@ export function buildHUD(root) {
   <div class="toast" id="toast"><span id="toastt"></span><small id="toasts"></small></div>
   <div class="portraitHint" id="phint">↻ Rotate for the best view<br><small>Portrait works too</small></div>
   </div><div id="screens"></div>`;
-  for (const id of ['hpbar', 'bpm', 'khp', 'kbar', 'objt', 'objs', 'progv', 'halflbl', 'boss', 'bossn', 'bossv', 'fingers', 'burgers', 'cokes', 'chipf', 'chipb', 'chipc', 'xh', 'hitm', 'lock', 'marker', 'floats', 'mag', 'res', 'wname', 'ammo', 'sub', 'rule', 'ruleh', 'rulet', 'toast', 'toastt', 'toasts', 'autofire', 'bmelee', 'bswap', 'bedpanico', 'callico', 'meleelbl', 'hud', 'screens', 'phint', 'portimg'])
+  for (const id of ['hpbar', 'bpm', 'khp', 'kbar', 'objt', 'objs', 'progv', 'halflbl', 'boss', 'bossn', 'bossv', 'fingers', 'burgers', 'cokes', 'chipf', 'chipb', 'chipc', 'xh', 'hitm', 'lock', 'marker', 'floats', 'mag', 'res', 'wname', 'ammo', 'sub', 'rule', 'ruleh', 'rulet', 'toast', 'toastt', 'toasts', 'autofire', 'bmelee', 'bswap', 'bedpanico', 'callico', 'meleelbl', 'hud', 'screens', 'phint', 'portimg', 'resetv'])
     H[id] = root.querySelector('#' + id);
   H.bloodv = $('.bloodv'); H.lowhp = $('.lowhp'); H.monitor = $('.monitor');
 }
