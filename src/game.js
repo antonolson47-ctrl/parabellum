@@ -396,14 +396,14 @@ function autopilot(dt) {
   if (t) { pl.yaw += angDiff(pl.yaw, t.yaw) * Math.min(1, dt * 10); pl.pitch += (t.pitch - pl.pitch) * Math.min(1, dt * 10); I.fire = t.ang < 0.12; }
   else { I.fire = false; if (!goal) { // wander toward the nearest zombie/boss via flow field
     let best = null, bd = 1e9; for (const z of [...Z.list.filter(z => z.alive && !z.dead), ...Z.hittables.filter(h => h.alive)]) { const d = z.pos.distanceTo(pl.pos); if (d < bd) { bd = d; best = z; } } if (best) goal = best.pos; } }
-  if (goal) { const dx = goal.x - pl.pos.x, dz = goal.z - pl.pos.z; const d = Math.hypot(dx, dz); if (d > 1.0) { let mx = dx / d, mz = dz / d; G.world.flowFrom(goal.x, goal.z); const fd = { x: 0, z: 0 }; if (!G.world.los(tmp.set(pl.pos.x, 1, pl.pos.z), tmp2.set(goal.x, 1, goal.z)) && G.world.flowDir(pl.pos.x, pl.pos.z, fd)) { mx = fd.x; mz = fd.z; } G.world.flowFrom(pl.pos.x, pl.pos.z);
+  if (goal) { const dx = goal.x - pl.pos.x, dz = goal.z - pl.pos.z; const d = Math.hypot(dx, dz); if (d > 1.0) { let mx = dx / d, mz = dz / d; G.world.flowFrom(goal.x, goal.z); const fd = { x: 0, z: 0 }; if (!G.world.los(tmp.set(pl.pos.x, 0.3, pl.pos.z), tmp2.set(goal.x, 0.3, goal.z)) && G.world.flowDir(pl.pos.x, pl.pos.z, fd)) { mx = fd.x; mz = fd.z; } G.world.flowFrom(pl.pos.x, pl.pos.z);
     if (!t) { pl.yaw += angDiff(pl.yaw, Math.atan2(-mx, -mz)) * Math.min(1, dt * 6); pl.pitch *= 0.9; }
     const fx = -Math.sin(pl.yaw), fz = -Math.cos(pl.yaw), rx = Math.cos(pl.yaw), rz = -Math.sin(pl.yaw); I.move.y = mx * fx + mz * fz; I.move.x = mx * rx + mz * rz; } }
   const w = pl.weapon; if (pl.ammo[w].mag === 0 && pl.ammo[w].res === 0) I.pressed.swap = true;
 }
 function testHooks() {
   return {
-    G, S, LEVELS, startLevel, titleScreen, Z, E,
+    G, S, LEVELS, startLevel, titleScreen, Z, E, P,
     state: () => ({ mode: G.mode, level: G.levelIdx, phase: G.level && G.level.phase, kills: G.level && G.level.kills, quota: G.level && G.level.quota, hp: G.player && Math.round(G.player.hp), fps: Math.round(E.fps), dyn: E.dynScale, alive: aliveCount(), burgers: S.data.burgers, cokes: S.data.cokes, run: G.run, kennedy: G.kennedy && G.kennedy.active, boss: G.level && G.level.boss ? Math.round(G.level.boss.hp) : null, timeLeft: G.level && G.level.timeLeft }),
     autopilot(on = true) { G.autopilot = on; G.autoSkipCine = on ? 300 : 0; }, autoSkip(ms) { G.autoSkipCine = ms; },
     skipCine() { const e = document.getElementById('cineskip'); if (e) e.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); },

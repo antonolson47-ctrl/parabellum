@@ -82,3 +82,10 @@ kweepie, pickups, kennedy, props, levels (9 builders), bosses, story (cutscenes 
 
 ### Step 5 — final screenshots (done)
 `screenshots/final/`: 01_title.png, 02_closeup_shayla.png, 03_hospital_gameplay.png, 04_kennedy_joins.png, 04b_kennedy_closeup.png, 04c_kennedy_ingame.png, 05_reunion.png, 05b_reunion_peace.png (1280×720 @1.5x, dist build).
+
+### Post-publish full playthrough (iPhone 15 landscape emulation, dist, 07:52–08:28 CT)
+- r2: all 9 shifts, 0 page errors / 0 console errors, final haul 143/136 → reunion ending, back to title.
+- Assists: hurtBoss once on the Mother (L8).
+- L3 Library stalled (20-min timeout). Cause: the autopilot checked line of sight to pickups at 1 m, so it walked straight into a 0.76 m reading table toward a coke and stuck there. It was a test-bot bug, not a player bug. I checked that zombies still reach a player hugging that table.
+- Fix: the bot checks the path at 0.3 m (knee height). Re-ran L3 on iPhone/dist (r3): cleared in 48 s with no assists, picked up all 18 burgers and 20 cokes, 0 errors.
+- Test hooks now expose `P` (pickups). Rebuilt and republished.
