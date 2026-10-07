@@ -90,13 +90,13 @@ kweepie, pickups, kennedy, props, levels (9 builders), bosses, story (cutscenes 
 - Fix: the bot checks the path at 0.3 m (knee height). Re-ran L3 on iPhone/dist (r3): cleared in 48 s with no assists, picked up all 18 burgers and 20 cokes, 0 errors.
 - Test hooks now expose `P` (pickups). Rebuilt and republished.
 
-### Birthday references removed + REPLAY (08:40 CT)
-- Anton never said this was a birthday game, so every birthday reference is gone:
+### Occasion references removed + REPLAY (08:40 CT)
+- The game is not tied to any occasion (Anton never specified one), so every occasion reference is gone:
   - title footer now reads "An original parody for Shayla · all music & sound procedurally generated"
   - reunion banner now reads "WELCOME HOME SHAYLA!" / "FAMILY REUNION · love, the family (and Kweepie)"
   - end card now reads "Welcome home, Shayla ♥"
   - rewrote the intro, Kennedy and reunion lines
-  - Kennedy's rifle "The Birthday One" is renamed "The Gift" (weapon, shop items, toast)
+  - Kennedy's rifle is renamed "The Gift" (weapon, shop items, toast)
   - cleaned the meta description, manifest, README and plan docs
 - The title button says REPLAY once Shift 9 is complete and restarts from Shift 1 (upgrades kept).
 - Re-captured screenshots/final/01_title.png, 05_reunion.png and 05b_reunion_peace.png.
