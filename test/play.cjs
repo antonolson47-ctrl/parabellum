@@ -11,7 +11,7 @@ const fs = require('fs');
   const errs = [];
   p.on('console', x => { const t = x.text(); if (x.type() === 'error' || x.type() === 'warning') errs.push(x.type() + ': ' + t.slice(0, 400)); if (process.env.V) console.log(x.type(), t.slice(0, 400)); });
   p.on('pageerror', e => { errs.push('PAGEERR ' + e.message); console.log('PAGEERR', e.message, (e.stack || '').split('\n').slice(0, 4).join(' | ')); });
-  await p.goto(`http://127.0.0.1:${s.address().port}/${page}`);
+  await p.goto(/^https?:/.test(page) ? page : `http://127.0.0.1:${s.address().port}/${page}`);
   await p.waitForFunction(() => (window.__PB && window.__PB.G.mode === 'title') || document.title.startsWith('ERR'), null, { timeout: 240000 }).catch(e => console.log('boot timeout'));
   console.log('booted', await p.title());
   for (const st of steps) {

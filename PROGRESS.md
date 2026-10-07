@@ -54,12 +54,12 @@ kweepie, pickups, kennedy, props, levels (9 builders), bosses, story (cutscenes 
    Dialogue is uncensored (text.js/story.js contain the raw words, no asterisks).
    Harness fix: dist/ has a static <title>, so tests now wait for window.__PB + mode 'title' (earlier iPhone/Pixel runs died on that, not on a game bug).
 
-### Step 2 — visual review (done, 08:10 CT)
+### Step 2 — visual review (done, ~07:46 CT)
 - Fresh dist captures at 1280×720 DPR 1.5: `screenshots/final/02_closeup_shayla.png` (intro close-up), `04b_kennedy_closeup.png`, `05_reunion.png`, `05b_reunion_peace.png`.
 - Faces are detailed and not blocky: sculpted skinned heads with eyelids/liner, brows, lips, curled hair (Kennedy, no cap), clothing shader (flannel, scrubs). The red-light tint on faces is gone.
 - Still simple: the truck in the Kennedy cutscene is box geometry, gun viewmodels are box geometry, and Kennedy's mustache is a tube.
 
-### Step 3 — mobile smoke on dist/index.html (done, 08:25 CT)
+### Step 3 — mobile smoke on dist/index.html (done, ~07:48 CT)
 - test/play.cjs now takes `BROWSER=webkit`.
 - Each run: load → start L1 → autopilot 20 s → title → Vendy's shop (13 buy buttons).
 
@@ -72,3 +72,13 @@ kweepie, pickups, kennedy, props, levels (9 builders), bosses, story (cutscenes 
 
 - Real issue fixed: in portrait, the HUD vitals panel overlapped the finger/burger/coke chips and the objective. Moved the chips to a second row on the right, shrank the monitor/Kennedy bar, and pushed the objective/rule/toast/boss bar down. Re-verified in WebKit (`test/shots/sm_portrait_play2.png`, 0 errors).
 - Shots: `test/shots/sm_{iph,ipad,pix,portrait}_{title,play,shop}.png`.
+
+### Step 4 — published (done, 07:49 CT)
+- `make_pages.sh` assembles `../parabellum-pages`: index.html (dist build + PWA links), assets/ (4.0 MB), Parabellum.html (6.5 MB single file), PIL icons (Butcherman P), manifest.webmanifest, .nojekyll, README, PROGRESS, src/, dev/game.html, test harness, and downscaled final screenshots. 13 MB total; the largest file is 6.5 MB, well under GitHub's 100 MB limit.
+- Repo: https://github.com/antonolson47-ctrl/parabellum (public, main). Pages enabled (legacy build from main /).
+- Live: https://antonolson47-ctrl.github.io/parabellum/ returned HTTP 200 at 07:49:56 CT. assets/*.glb, manifest, icons and Parabellum.html all return 200.
+- Live WebKit check (iPhone 15 landscape): booted, played L1 20 s (12 kills, 12 headshots), opened the shop (13 items), 0 page errors / 0 console errors. Shots: `test/shots/sm_live_{title,play,shop}.png`.
+- test/play.cjs now accepts a full URL in PAGE.
+
+### Step 5 — final screenshots (done)
+`screenshots/final/`: 01_title.png, 02_closeup_shayla.png, 03_hospital_gameplay.png, 04_kennedy_joins.png, 04b_kennedy_closeup.png, 04c_kennedy_ingame.png, 05_reunion.png, 05b_reunion_peace.png (1280×720 @1.5x, dist build).
