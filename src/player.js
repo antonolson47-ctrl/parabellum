@@ -3,7 +3,9 @@ import * as THREE from 'three';
 import { G } from './state.js';
 import { E } from './engine.js';
 import { I, consumeLook, consumePressed } from './input.js';
-import { WEAPONS, ORDER, buildViewmodels } from './weapons.js';
+import { WEAPONS, ORDER } from './weapons.js';
+import { createVM, configureVM, poseVM, vmShot, upgradeCfg, Casings, setGunEnv } from './guns.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { raycastTargets, allTargets } from './zombies.js';
 import { blood, sparks, decal, tracer, muzzle, arc } from './fx.js';
 import { sfx, setListener } from './audio.js';
@@ -15,7 +17,9 @@ const ASSIST = { off: [0, 0, 0], low: [0.05, 0.6, 0.025], medium: [0.09, 1.3, 0.
 export class Player {
   constructor() {
     this.pos = new THREE.Vector3(); this.yaw = 0; this.pitch = 0; this.vel = new THREE.Vector3(); this.bob = 0; this.kick = 0; this.shake = 0;
-    this.VM = buildViewmodels(); this.vmRoot = new THREE.Group(); E.camera.add(this.vmRoot); for (const k in this.VM) { this.VM[k].visible = false; this.vmRoot.add(this.VM[k]); }
+    setGunEnv(E.renderer, RoomEnvironment);
+    this.VM = {}; this.vmRoot = new THREE.Group(); E.camera.add(this.vmRoot); for (const k of [...ORDER, 'bedpan']) { const vm = createVM(k); vm.visible = false; this.vmRoot.add(vm); this.VM[k] = vm; }
+    this.casings = new Casings(E.scene); this.shellQ = []; this.refreshVM();
     this.vmLight = new THREE.PointLight(0xfff2dd, 0.6, 1.2); this.vmLight.position.set(0.1, 0.1, 0); this.vmRoot.add(this.vmLight);
     this.flashlight = new THREE.SpotLight(0xfff4e0, 0, 28, 0.5, 0.55, 1.5); this.flashlight.position.set(0.15, -0.1, 0); E.camera.add(this.flashlight); this.flashlight.target.position.set(0, 0, -5); E.camera.add(this.flashlight.target);
   }
@@ -24,7 +28,7 @@ export class Player {
     this.maxHp = 100 + up('hp') * 25; this.hp = this.maxHp; this.dead = false; this.reviveUsed = false; this.saltsUsed = false; this.invuln = 0;
     this.ammo = {}; for (const k of ORDER) { const w = this.wstats(k); this.ammo[k] = { mag: w.mag, res: w.reserve }; }
     this.weapon = 'pistol'; this.cool = 0; this.reloading = 0; this.swapT = 0; this.meleeT = 0; this.meleeCd = 0; this.shushed = 0; this.slow = 0; this.loaned = false;
-    this.lockTarget = null; this.hurtT = 0; this.lastHurt = -10; this.showWeapon('pistol', true);
+    this.lockTarget = null; this.hurtT = 0; this.lastHurt = -10; this.showWeapon('pistol', true); this.casings.clear(); this.shellQ.length = 0;
     this.flashlight.intensity = G.level && G.level.dark ? 14 : 0; this.flashlight.castShadow = !!(E.q.flashShadow && G.level && G.level.dark);
   }
   available() { return ORDER.filter(k => k === 'pistol' || S.data.owned[k] || (k === 'rifle' && this.loaned)); }
@@ -37,7 +41,8 @@ export class Player {
     if (G.kennedy && G.kennedy.active && up('k_hype')) w.dmg *= 1.15;
     return w;
   }
-  showWeapon(k, instant) { for (const n in this.VM) this.VM[n].visible = false; this.VM[k].visible = true; this.weapon = k; this.reloading = 0; this.swapT = instant ? 0 : 0.35; if (!instant) sfx('swap'); }
+  refreshVM() { for (const k in this.VM) { const vm = this.VM[k], key = vm.userData.cfgKey; configureVM(vm, upgradeCfg(k, up)); if (vm.userData.cfgKey !== key) vm.traverse(o => { if (o.isMesh) { o.castShadow = false; o.receiveShadow = false; o.renderOrder = 10; } }); } }
+  showWeapon(k, instant) { this.refreshVM(); for (const n in this.VM) this.VM[n].visible = false; this.VM[k].visible = true; this.weapon = k; this.reloading = 0; this.swapT = instant ? 0 : 0.35; if (!instant) sfx('swap'); }
   swap(dir = 1) { const av = this.available(); if (av.length < 2) return; const i = av.indexOf(this.weapon); this.showWeapon(av[(i + dir + av.length) % av.length]); }
   select(k) { if (this.available().includes(k) && k !== this.weapon) this.showWeapon(k); }
   reload() {
@@ -122,21 +127,28 @@ export class Player {
     if (a.mag <= 0 && a.res > 0 && this.reloading <= 0) this.reload();
     // viewmodel animation
     const base = ud.base; const bobX = Math.sin(this.bob) * 0.012 * Math.min(1, spd / 4), bobY = Math.abs(Math.cos(this.bob)) * 0.014 * Math.min(1, spd / 4);
-    let ry = 0, rx = 0, dy = 0, dz = 0;
-    if (this.reloading > 0 && !w.shellReload) { const t = 1 - this.reloading / w.reload; const s = Math.sin(t * Math.PI); rx = -0.6 * s; dy = -0.12 * s; ry = 0.3 * s; }
-    if (this.reloading > 0 && w.shellReload) { const s = Math.sin((1 - this.reloading / w.reload) * Math.PI); rx = -0.25; dy = -0.05; ry = 0.2 * s; }
-    if (this.swapT > 0) { dy -= this.swapT * 0.6; }
-    vm.position.set(base.x + bobX, base.y - bobY + dy + this.kick * 0.25, base.z + dz + this.kick * 0.8); vm.rotation.set(rx + this.kick * 2.2, ry, 0);
-    if (ud.slide) ud.slide.position.z = -0.06 + Math.min(0.03, this.kick * 1.2);
-    if (ud.pump) ud.pump.position.z = -0.3 + (this.cool > w.rate * 0.3 && this.cool < w.rate * 0.85 ? 0.08 : 0);
-    if (ud.flash) { const on = this.flashT > 0; ud.flash.userData.parts.forEach(pp => pp.visible = on); if (on) { this.flashT -= dt; ud.flash.rotation.z = rand(0, 6.28); } }
+    let dy = 0; if (this.swapT > 0) dy -= this.swapT * 0.6;
+    const shellR = w.shellReload && this.reloading > 0, rp = this.reloading > 0 ? clamp(1 - this.reloading / w.reload, 0, 1) : -1;
+    vm.position.set(base.x + bobX, base.y - bobY + dy + this.kick * 0.06, base.z + this.kick * 0.2); vm.rotation.set(this.kick * 0.5, 0, 0);
+    poseVM(vm, { dt, reloadP: shellR ? -1 : rp, shellP: shellR ? rp : -1, empty: a.mag === 0 && k !== 'defib', shellTilt: shellR ? 1 : 0 });
+    // muzzle light on the hands/gun + ejected brass
+    if (this.flashT > 0) this.flashT -= dt; this.vmLight.intensity = 0.6 + (this.flashT > 0 && k !== 'bedpan' ? (k === 'defib' ? 0.5 : 0.45) * Math.min(1, this.flashT / 0.03) : 0); this.vmLight.color.setHex(this.flashT > 0 ? (k === 'defib' ? 0x9fd8ff : 0xffc27a) : 0xfff2dd);
+    for (let i = this.shellQ.length - 1; i >= 0; i--) { const q = this.shellQ[i]; q.t -= dt; if (q.t <= 0) { this.ejectCasing(q.type, q.eject); this.shellQ.splice(i, 1); } }
+    this.casings.update(dt, this.pos.y);
     // melee bedpan swing
     const bp = this.VM.bedpan; if (this.meleeT > 0) { this.meleeT -= dt; const t = 1 - this.meleeT / 0.45; bp.visible = true; vm.visible = false; const s = Math.sin(t * Math.PI); bp.position.set(-0.35 + t * 0.6, -0.2 + s * 0.12, -0.42); bp.rotation.set(-0.3, 0.9 - t * 1.8, -0.6 + t * 0.9); if (t > 0.35 && !this.meleeHit) { this.meleeHit = true; this.meleeStrike(); } if (this.meleeT <= 0) { bp.visible = false; vm.visible = true; } }
   }
+  ejectCasing(type, ej) {
+    if (!ej) return; const p = ej.getWorldPosition(new THREE.Vector3()); const q = E.camera.getWorldQuaternion(new THREE.Quaternion());
+    const v = new THREE.Vector3(1.6 + Math.random() * 0.8, 1.5 + Math.random() * 0.7, 0.3 + Math.random() * 0.4); if (type === 'shotgun' || type === 'dragon') v.set(1.3, 0.9, 0.3);
+    v.applyQuaternion(q).add(this.vel); this.casings.spawn(type, p, v);
+  }
   fire(w, k) {
     const a = this.ammo[k]; a.mag--; this.kick += w.kick; this.flashT = 0.045; sfx(w.sfx, null, 0.9); G.onShoot && G.onShoot(k);
-    const eye = this.eye(new THREE.Vector3()); const dir = this.dir(new THREE.Vector3()); const mzw = this.VM[k].userData.muzzle.getWorldPosition(new THREE.Vector3());
-    muzzle(mzw, k === 'defib' ? 4 : 5, k === 'defib' ? 0x88ccff : 0xffc070);
+    const shot = vmShot(this.VM[k]); this.VM[k].updateMatrixWorld(true);
+    if (k === 'pistol' || k === 'rifle') this.ejectCasing(k, shot.eject); else if (k === 'shotgun') this.shellQ.push({ t: 0.2, type: up('shotgun_sig') >= 1 ? 'dragon' : 'shotgun', eject: shot.eject });
+    const eye = this.eye(new THREE.Vector3()); const dir = this.dir(new THREE.Vector3()); const mzw = shot.muzzle.getWorldPosition(new THREE.Vector3());
+    muzzle(mzw.clone().addScaledVector(dir, 1.6), k === 'defib' ? 4 : 5, k === 'defib' ? 0x88ccff : 0xffc070); // world light sits ahead of the barrel so it lights the room, not blow out the gun
     const assist = ASSIST[S.data.settings.aim] || ASSIST.medium; let mag = null;
     if (assist[2] > 0) { const t = this.findTarget(assist[2]); if (t) mag = t; }
     if (k === 'defib') { this.fireDefib(w, eye, dir, mag, mzw); return; }

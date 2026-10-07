@@ -1,7 +1,7 @@
 // Kennedy: AI partner. Follows Shayla, shoots zombies nearest to her, barks, gets downed and gets back up, revives her once.
 import * as THREE from 'three';
 import { makeCharacter } from './chars.js';
-import { rifleWorldModel } from './weapons.js';
+import { rifleWorldModel } from './guns.js';
 import { G } from './state.js';
 import { E } from './engine.js';
 import { allTargets } from './zombies.js';

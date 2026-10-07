@@ -100,3 +100,12 @@ kweepie, pickups, kennedy, props, levels (9 builders), bosses, story (cutscenes 
   - cleaned the meta description, manifest, README and plan docs
 - The title button says REPLAY once Shift 9 is complete and restarts from Shift 1 (upgrades kept).
 - Re-captured screenshots/final/01_title.png, 05_reunion.png and 05b_reunion_peace.png.
+
+## Gun art pass (detailed first-person guns, hands, Kennedy's rifle)
+- New `src/guns.js`: procedural, merged-per-material models (no external assets): polymer-frame/steel-slide 9mm, anodized AR with M-LOK rail + red dot, blued pump shotgun with walnut furniture, ABS defib cannon, bedpan. PBR materials with canvas normal/roughness maps, a vertex "edge wear" shader patch and a small PMREM RoomEnvironment for metal reflections (applied to gun/hand materials only).
+- Every shop upgrade changes the model: Hot Loads → compensator, Extended Mag → longer mag, Speed Loader → red magwell, Hollow-Point Oath → RMR optic, Akimbo → two pistols; Match Grade → brake → suppressor, Drum Mag → PMAG+ → dual drum, Bump of Faith → OD bump stock; Buckshot+ → heat shield, Side Saddle → shell carrier, Dragon's Breath → orange shells; 360 Joules / Code Blue → capacitor glow + blue coils.
+- Animation: slide/bolt cycle + lock back on empty, recoil kick, star-plane muzzle flash + light, instanced ejected brass/shells (pump-timed for the shotgun), mag-out/mag-in reload with the support hand carrying the fresh mag, shell-by-shell shotgun reload.
+- First-person hands: Shayla's skin tone, green scrub sleeves with hem, watch on the left wrist; per-weapon grips (two-hand pistol, C-clamp foregrip, pump hand follows the forend), forearms bent at the wrist toward the shoulders.
+- Shop cards show icons rendered from the 3D models (cached data URLs). Kennedy's world rifle uses the same AR model.
+- Fixed an old bug: bullet tracers pointed backward from the muzzle.
+- Screenshots: screenshots/guns/before_* and after_* (pistol/AR idle, fire, reload; Kennedy; shop icons). Lab: dev/guns.html + test/lab.cjs.

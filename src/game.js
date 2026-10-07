@@ -1,5 +1,6 @@
 // Game flow: title, shifts, level lifecycle, spawn director, Kennedy call-in, bosses, pickups, barks, results, Vendy's shop, endings.
 import * as THREE from 'three';
+import { gunIcon, upgradeCfg } from './guns.js';
 import { E, render, trackFrame, setQuality, QUALITY } from './engine.js';
 import { G } from './state.js';
 import { I, initInput, bindButton, pollKeyboard, resetInput } from './input.js';
@@ -145,13 +146,19 @@ function settingsScreen(back) {
 }
 function applySettings() { const st = S.data.settings; if (E.qname !== st.quality) { setQuality(st.quality); if (G.env) G.env.sun.shadow.mapSize.set(E.q.shadowSize, E.q.shadowSize); } I.sens = st.sens; I.invertY = st.invertY; setVolumes(st.music, st.sfx); H.sub.style.visibility = st.subs ? '' : 'hidden'; }
 const VENDY = ["Welcome to Vendy's! I take fingers. Don't ask what I do with them.", "Fingers in, firepower out. That's the circle of life, sweetie.", "Ooh, those are fresh. Still warm. Love that for you.", "No refunds. No questions. No fingers left behind.", "Kennedy already bought three of these. Don't tell him I told you."];
+// shop thumbnails are rendered from the actual 3D gun models (the upgrade card shows that upgrade fitted)
+function shopIcon(it) {
+  const kind = it.weapon || (it.id.match(/^(pistol|rifle|shotgun|defib)_/) || [])[1]; if (!kind) return '';
+  let cfg; if (it.weapon) cfg = upgradeCfg(kind, up); else { const lv = Math.min(it.cost.length, up(it.id) + 1); cfg = upgradeCfg(kind, k => (k === it.id ? lv : 0)); }
+  try { return `<img class="ico" src="${gunIcon(E.renderer, kind, cfg)}" alt="">`; } catch (e) { console.warn('icon', e); return ''; }
+}
 function shopScreen(back, nextLabel) {
   G.mode = 'shop'; showHUD(false); if (A.ctx) playMusic('shop');
   const draw = () => {
     const items = SHOP.filter(it => (it.req === undefined || S.data.unlocked >= it.req) && (!it.need || S.data.owned[it.need]));
     const cards = items.map(it => {
       const lvl = it.weapon ? (S.data.owned[it.weapon] ? 1 : 0) : up(it.id); const max = it.cost.length; const owned = lvl >= max; const cost = owned ? 0 : it.cost[lvl];
-      return `<div class="item ${owned ? 'owned' : ''}"><div class="n">${it.name}</div><div class="d">${it.desc}</div><div class="lv">${it.cat}${max > 1 ? ` · Lv ${lvl}/${max}` : ''}</div><button class="buybtn" data-id="${it.id}" ${owned || S.data.fingers < cost ? 'disabled' : ''}>${owned ? 'OWNED' : `${FINGER} ${cost}`}</button></div>`;
+      return `<div class="item ${owned ? 'owned' : ''}">${shopIcon(it)}<div class="n">${it.name}</div><div class="d">${it.desc}</div><div class="lv">${it.cat}${max > 1 ? ` · Lv ${lvl}/${max}` : ''}</div><button class="buybtn" data-id="${it.id}" ${owned || S.data.fingers < cost ? 'disabled' : ''}>${owned ? 'OWNED' : `${FINGER} ${cost}`}</button></div>`;
     }).join('');
     screen(`<div class="shop"><div class="hd"><h3>VENDY'S VENDING EMPORIUM</h3><div class="vendy">“${pick(VENDY)}”</div><div class="fing">${FINGER}<span>${S.data.fingers}</span></div></div><div class="grid">${cards}</div><div class="shopfoot"><button class="b small" id="shopgo">${nextLabel || 'BACK'}</button></div></div>`);
     H.screens.querySelectorAll('.buybtn').forEach(b => b.addEventListener('click', () => buy(b.dataset.id)));
@@ -338,7 +345,7 @@ function pause(on) {
 function frame(dt) {
   if (cineActive()) { cineTick(dt); hudTick(dt); trackFrame(dt); return; }
   if (G.mode === 'title' || G.mode === 'menu' || (G.mode === 'shop' && !G.world)) { renderTitle(dt); trackFrame(dt); return; }
-  if (G.mode === 'play') { const n = G.substeps || 1; for (let k = 0; k < n && G.mode === 'play'; k++) update(dt); }
+  if (G.mode === 'play' && G.timeScale !== 0) { const n = G.substeps || 1; for (let k = 0; k < n && G.mode === 'play'; k++) update(dt * (G.timeScale || 1)); }
   else if (G.mode === 'dead' || G.mode === 'results') { updateZombies(dt * 0.3); updateFX(dt * 0.3); }
   if (G.world && G.mode !== 'loading') { if (G.env) followSun(); render(); }
   else if (G.mode === 'shop') renderTitle(dt);
@@ -413,6 +420,6 @@ function testHooks() {
     hurtBoss(f = 0.5) { const b = G.level && G.level.boss; if (!b) return; if (b.z) { b.z.invuln = false; if (b.orbs) b.orbs.forEach(o => o.damage(9999)); b.z.damage(b.z.maxHp * f, 'chest', null, null, 'test'); } else b.damage(b.maxHp * f, 'chest', null, null); },
     spawn(beh = 'walker', x, z, opt = {}) { const zz = freeZombie(); if (zz) zz.spawn(new THREE.Vector3(x, 0, z), beh, opt); return !!zz; }, noDirector(on = true) { G.noDirector = on; },
     tp(x, z) { G.player.pos.set(x, 0, z); }, look(yaw, pitch = 0) { G.player.yaw = yaw; G.player.pitch = pitch; },
-    cine: name => runCine(name), pause, callKennedy, levelComplete, fast(on) { G.fast = on; }, substeps(n) { G.substeps = n; },
+    cine: name => runCine(name), pause, callKennedy, levelComplete, fast(on) { G.fast = on; }, substeps(n) { G.substeps = n; }, timeScale(n) { G.timeScale = n; }, step(dt = 1 / 60, n = 1) { for (let i = 0; i < n; i++) update(dt); }, shoot() { const pl = G.player, k = pl.weapon; pl.fire(pl.wstats(k), k); pl.cool = pl.wstats(k).rate; },
   };
 }

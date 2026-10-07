@@ -41,3 +41,7 @@ A zombie shooter starring Shayla, RN. It's a 12-hour shift and the undead have c
 - Fonts: Butcherman, Black Ops One, Barlow Condensed, Teko (SIL OFL); Permanent Marker (Apache 2.0).
 - Engine: three.js (MIT).
 - An original parody for Shayla. Not affiliated with any real business.
+
+
+### Guns
+`src/guns.js` builds the detailed first-person guns, hands, ejected brass, shop icons and Kennedy's rifle procedurally (PBR + edge-wear shader). Preview lab: `dev/guns.html?w=pistol|rifle|shotgun|defib|bedpan&view=fp|side|vm3|icons`.

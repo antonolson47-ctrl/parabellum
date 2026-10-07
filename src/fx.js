@@ -25,7 +25,7 @@ export function initFX(scene) {
   FX.gibHead = 0;
   // tracers
   FX.tr = []; const tm = new THREE.MeshBasicMaterial({ color: 0xffe9a0, transparent: true, opacity: 0.8, depthWrite: false, blending: THREE.AdditiveBlending });
-  const tg = new THREE.BoxGeometry(0.012, 0.012, 1); tg.translate(0, 0, -0.5);
+  const tg = new THREE.BoxGeometry(0.012, 0.012, 1); tg.translate(0, 0, 0.5); // Object3D.lookAt aims +z at the target
   for (let i = 0; i < 12; i++) { const t = new THREE.Mesh(tg, tm); t.visible = false; t.frustumCulled = false; scene.add(t); FX.tr.push({ m: t, life: 0 }); }
   FX.trHead = 0;
   // arcs (defib)

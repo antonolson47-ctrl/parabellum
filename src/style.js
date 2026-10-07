@@ -127,6 +127,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#000;color:#fff;oversc
 .item .d{font-size:13px;opacity:.85;line-height:1.1;flex:1}
 .item .lv{font-size:12px;color:#7dffa8}
 .item.owned{border-color:#57d68d}
+.item .ico{display:block;width:100%;height:58px;object-fit:contain;margin:-2px 0 2px;background:radial-gradient(ellipse at center,rgba(200,215,235,.30),rgba(200,215,235,0) 68%);border-radius:8px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))}
 .buybtn{margin-top:4px;font-family:'Black Ops One';font-size:13px;color:#111;background:#ffd84a;border:0;border-radius:6px;padding:5px 8px;display:flex;align-items:center;justify-content:center;gap:4px}
 .buybtn[disabled]{background:#555;color:#999}
 .buybtn svg{width:15px;height:15px}
