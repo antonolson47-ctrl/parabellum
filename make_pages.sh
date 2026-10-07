@@ -13,7 +13,7 @@ cat > $OUT/manifest.webmanifest <<'MAN'
 {
   "name": "PARABELLUM: Shayla vs. the Undead and the Steakburger Apocalypse",
   "short_name": "PARABELLUM",
-  "description": "A birthday zombie shooter starring Shayla, RN. Adults 18+: graphic gore and nonstop swearing.",
+  "description": "A zombie shooter starring Shayla, RN. Adults 18+: graphic gore and nonstop swearing.",
   "start_url": "./",
   "scope": "./",
   "display": "fullscreen",

@@ -6,7 +6,7 @@
 
 > **18+:** graphic gore and nonstop swearing. Grown-ups only.
 
-A birthday zombie shooter for Shayla, RN. It's a 12-hour shift and the undead have clocked in too. She has to fight across Fayetteville, survive until Kennedy shows up with a truck full of guns he swore he didn't buy, and haul **120 steakburgers and 120 Cokes** home for the family reunion.
+A zombie shooter starring Shayla, RN. It's a 12-hour shift and the undead have clocked in too. She has to fight across Fayetteville, survive until Kennedy shows up with a truck full of guns he swore he didn't buy, and haul **120 steakburgers and 120 Cokes** home for the family reunion.
 
 ## Shifts
 1. Ozark Mercy Regional: Code Brown (boss: The Chief of Surgery)
@@ -40,4 +40,4 @@ A birthday zombie shooter for Shayla, RN. It's a 12-hour shift and the undead ha
 - Character bodies and animations: Quaternius *Universal Base Characters* and *Universal Animation Library* (CC0).
 - Fonts: Butcherman, Black Ops One, Barlow Condensed, Teko (SIL OFL); Permanent Marker (Apache 2.0).
 - Engine: three.js (MIT).
-- Original parody made for Shayla's birthday. Not affiliated with any real business.
+- An original parody for Shayla. Not affiliated with any real business.

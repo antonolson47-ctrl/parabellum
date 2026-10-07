@@ -4,7 +4,7 @@ import { canvasTex } from './util.js';
 import { T } from './world.js';
 export const WEAPONS = {
   pistol: { name: 'TRUSTY 9MM', dmg: 34, rate: 0.19, mag: 17, reserve: Infinity, reload: 1.25, spread: 0.006, pellets: 1, auto: false, sfx: 'pistol', kick: 0.035, range: 70 },
-  rifle: { name: '"THE BIRTHDAY ONE"', dmg: 30, rate: 0.095, mag: 30, reserve: 210, reload: 1.7, spread: 0.011, pellets: 1, auto: true, sfx: 'rifle', kick: 0.018, range: 90 },
+  rifle: { name: '"THE GIFT"', dmg: 30, rate: 0.095, mag: 30, reserve: 210, reload: 1.7, spread: 0.011, pellets: 1, auto: true, sfx: 'rifle', kick: 0.018, range: 90 },
   shotgun: { name: 'YARD-SALE PUMP', dmg: 17, rate: 0.75, mag: 6, reserve: 42, reload: 0.42, shellReload: true, spread: 0.075, pellets: 10, auto: false, sfx: 'shotgun', kick: 0.09, range: 30 },
   defib: { name: 'DEFIB CANNON', dmg: 95, rate: 0.85, mag: 6, reserve: 24, reload: 2.0, spread: 0.002, pellets: 1, auto: false, sfx: 'defib', kick: 0.06, range: 40, chain: 3 },
 };

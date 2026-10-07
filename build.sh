@@ -17,7 +17,7 @@ def page(pre):
     return f'''<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#000000"><meta name="description" content="PARABELLUM: Shayla vs. the Undead and the Steakburger Apocalypse. An 18+ zombie FPS birthday game.">
+<meta name="theme-color" content="#000000"><meta name="description" content="PARABELLUM: Shayla vs. the Undead and the Steakburger Apocalypse. An 18+ zombie FPS.">
 <title>PARABELLUM</title><!--PWA-LINKS-->
 <style>{fonts}</style>
 <script>{pre}</script>

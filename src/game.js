@@ -112,12 +112,12 @@ const onClick = (id, f) => { const e = $s(id); if (e) e.addEventListener('click'
 function haulLine() { return `<span>${FINGER}${S.data.fingers}</span><span>🍔 ${S.data.burgers}/120</span><span>🥤 ${S.data.cokes}/120</span>`; }
 export function titleScreen() {
   G.mode = 'title'; showHUD(false); I.enabled = false; if (document.exitPointerLock && document.pointerLockElement) document.exitPointerLock(); if (A.ctx) playMusic('title');
-  const next = Math.min(S.data.unlocked, 8); const started = S.data.completed.length > 0;
+  const next = Math.min(S.data.unlocked, 8); const started = S.data.completed.length > 0; const beaten = S.data.completed.includes(8);
   screen(`<h1>PARABELLUM</h1><h2>Shayla vs. the Undead and the Steakburger Apocalypse</h2>
   <div class="age">18+ · GRAPHIC GORE &amp; NONSTOP SWEARING<small>Blood, dismemberment, exploding heads and a nurse who swears like a sailor. Grown-ups only.</small></div>
-  <div class="menu"><button class="b" id="tplay">${started ? 'CONTINUE · SHIFT ' + (next + 1) : 'CLOCK IN'}</button><button class="b alt" id="tshifts">SHIFTS</button><button class="b alt" id="tshop">VENDY'S</button><button class="b alt" id="tset">SETTINGS</button></div>
-  <div class="foot">${haulLine()}</div><div class="credit">A birthday game for Shayla · original parody · all music &amp; sound procedurally generated</div>`, 'title');
-  onClick('tplay', () => startLevel(next)); onClick('tshifts', shiftsScreen); onClick('tshop', () => shopScreen(titleScreen)); onClick('tset', () => settingsScreen(titleScreen));
+  <div class="menu"><button class="b" id="tplay">${beaten ? 'REPLAY' : started ? 'CONTINUE · SHIFT ' + (next + 1) : 'CLOCK IN'}</button><button class="b alt" id="tshifts">SHIFTS</button><button class="b alt" id="tshop">VENDY'S</button><button class="b alt" id="tset">SETTINGS</button></div>
+  <div class="foot">${haulLine()}</div><div class="credit">An original parody for Shayla · all music &amp; sound procedurally generated</div>`, 'title');
+  onClick('tplay', () => startLevel(beaten ? 0 : next)); onClick('tshifts', shiftsScreen); onClick('tshop', () => shopScreen(titleScreen)); onClick('tset', () => settingsScreen(titleScreen));
 }
 function shiftsScreen() {
   G.mode = 'menu';
@@ -297,7 +297,7 @@ async function callKennedy() {
   if (!S.data.seenKennedy && !G.autopilot) { await runCine('kennedy'); S.data.seenKennedy = true; save(); showHUD(true); I.enabled = true; }
   const a = L.anc.kennedy; const pl = G.player; let p = { x: a.x, z: a.z }; if (Math.hypot(a.x - pl.pos.x, a.z - pl.pos.z) > 20) { const fx = -Math.sin(pl.yaw), fz = -Math.cos(pl.yaw); p = { x: pl.pos.x - fx * 3, z: pl.pos.z - fz * 3 }; }
   G.kennedy.arrive(p, pl.yaw); setTimeout(() => bark('kennedyArrive', 3), 2600);
-  if (!S.data.owned.rifle) { pl.loaned = true; H.bswap.classList.add('glow'); toast('KENNEDY HAS JOINED', 'He tossed you "The Birthday One" for this shift · tap SWAP', 3.2); }
+  if (!S.data.owned.rifle) { pl.loaned = true; H.bswap.classList.add('glow'); toast('KENNEDY HAS JOINED', 'He tossed you "The Gift" for this shift · tap SWAP', 3.2); }
   else toast('KENNEDY HAS JOINED', 'Flannel. Rifle. Zero chill.', 2.6);
 }
 function onDeath() {

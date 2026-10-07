@@ -81,7 +81,7 @@ const SETS = {
     for (let i = 0; i < 8; i++) W.cyl(-1.2 + i * 0.35, 0.76, 0.45, 0.035, 0.03, 0.13, col(i % 2 ? '#c8102e' : '#ffffff'), { seg: 8 });
     stringLights(W, -6, -3, 6, -3, 3.0, 16); stringLights(W, -6, -5.5, 6, -5.5, 3.4, 16);
     cooler(W, -2.6, 1.2, 0.3); for (const [x, z] of [[-9, -4], [9, -5], [-8, 6]]) tree(W, x, z, 1.2, { color: 0x3a6a2a });
-    W.sign(['HAPPY BIRTHDAY SHAYLA!', 'love, the family (and Kweepie)'], 0, 3.6, -6.9, 5, 1.0, { bg: '#fff3c0', colors: ['#c22', '#333'], box: 0.05 });
+    W.sign(['WELCOME HOME SHAYLA!', 'FAMILY REUNION · love, the family (and Kweepie)'], 0, 3.6, -6.9, 5, 1.0, { bg: '#fff3c0', colors: ['#c22', '#333'], box: 0.05 });
     return { hemi: ['#fff4e6', '#4a4030', 1.1], key: ['#fff0dc', 2.3, 5, 7, 8], exposure: 1.0 };
   },
 };
@@ -89,7 +89,7 @@ const SETS = {
 const SH = { x: 0, z: 0 };
 export const CINES = {
   intro: [
-    { set: 'station', card: ['OZARK MERCY REGIONAL', 'Night shift · 6:58 PM · two days before the family reunion'], cast: { shayla: [-0.2, -1.6, 0.15, 'Idle_Loop'], kelly: [1.0, 0.25, -2.6, 'Idle_Talking_Loop'], doll: [0.45, -0.8, 0.25] }, cam: { pos: [-2.2, 1.7, 2.6], pos2: [-1.7, 1.6, 2.0], look: [0.3, 1.2, -0.7] }, lines: [['KELLY', 'Happy early birthday! I found you something at an estate sale!']] },
+    { set: 'station', card: ['OZARK MERCY REGIONAL', 'Night shift · 6:58 PM · two days before the family reunion'], cast: { shayla: [-0.2, -1.6, 0.15, 'Idle_Loop'], kelly: [1.0, 0.25, -2.6, 'Idle_Talking_Loop'], doll: [0.45, -0.8, 0.25] }, cam: { pos: [-2.2, 1.7, 2.6], pos2: [-1.7, 1.6, 2.0], look: [0.3, 1.2, -0.7] }, lines: [['KELLY', 'Surprise! I found you something at an estate sale!']] },
     { cam: { close: 'doll', dist: 0.55, side: -0.05, h: 0.02 }, lines: [['KELLY', "Her name's Kweepie! The lady said she's 'a little bit cursed,' but I got her down to four dollars."], ['KWEEPIE', '...hee hee hee.']], fx: 'giggle' },
     { cam: { close: 'shayla', dist: 0.75, side: 0.18 }, talk: 'shayla', lines: [['SHAYLA', 'Kelly. Why the fuck does it have red eyes.'], ['SHAYLA', "I'm not a hero. I'm a nurse with a twelve-hour shift and zero fucks left. Take your haunted doll and—"]] },
     { cam: { pos: [2.4, 1.5, 1.8], pos2: [2.1, 1.45, 1.5], look: [0.0, 1.2, -0.9] }, fx: 'flicker', lines: [['INTERCOM', 'Code... Code Brown. All floors. Code Brown. Oh God, it’s biting—'], ['KWEEPIE', 'HEE HEE HEE HEE.']] },
@@ -106,14 +106,14 @@ export const CINES = {
     { set: 'truck', card: ['BACKUP HAS ARRIVED', 'Kennedy · Flannel · Questionable judgment'], cast: { kennedy: [0.9, 0.4, 0.4, 'Idle_Loop'], shayla: [1.6, 3.6, Math.PI + 0.2, 'Pistol_Idle_Loop'] }, gcase: 'kennedy', cam: { pos: [4.5, 1.2, 4.5], pos2: [3.6, 1.3, 3.4], look: [0.6, 1.0, 0] }, fx: 'skid', lines: [['KENNEDY', "Babe! I came as fast as I could! I brought... a few things."]] },
     { cam: { close: 'kennedy', dist: 0.75, side: 0.18 }, talk: 'kennedy', lines: [['SHAYLA', 'Kennedy. How many guns are in that case.'], ['KENNEDY', "Define 'guns.'"]] },
     { cam: { close: 'shayla', dist: 0.7, side: -0.15 }, talk: 'shayla', lines: [['SHAYLA', 'KENNEDY.']] },
-    { cam: { close: 'kennedy', dist: 0.68, side: -0.12 }, talk: 'kennedy', lines: [['KENNEDY', "...Eleven. But one of them's a birthday present, so it doesn't count. Happy birthday?"]] },
+    { cam: { close: 'kennedy', dist: 0.68, side: -0.12 }, talk: 'kennedy', lines: [['KENNEDY', "...Eleven. But one of them's a gift, so it doesn't count. Surprise?"]] },
     { cam: { pos: [3.0, 1.5, 2.6], pos2: [2.6, 1.6, 2.2], look: [1.2, 1.2, 1.8] }, talk: 'shayla', lines: [['SHAYLA', 'Give me the tan one, get behind me, and if you die I will fucking kill you.'], ['KENNEDY', 'Yes ma’am. God, I love you.']] },
   ],
   finale: [
     { set: 'overlook', card: ['MOUNT SEQUOYAH', 'Sunrise'], cast: { shayla: [-0.6, 0.9, 0.3, 'Idle_Loop'], kennedy: [1.4, 1.2, -0.4, 'Pistol_Idle_Loop'] }, cam: { pos: [0.5, 1.4, 4.6], pos2: [0.4, 1.3, 3.6], look: [0.2, 0.8, 0] }, lines: [['SHAYLA', 'Duct tape. Cooler. Lid. Done.'], ['KWEEPIE', '(muffled) mmph hee hee mmph.']] },
     { cam: { close: 'kennedy', dist: 0.75, side: -0.15 }, talk: 'kennedy', lines: [['KENNEDY', 'Should we, like... throw it off the mountain?']] },
     { cam: { close: 'shayla', dist: 0.68, side: 0.15 }, talk: 'shayla', lines: [['SHAYLA', "No. We're giving it back to Kelly. With a bow on it."], ['KENNEDY', "That's evil. I love it."]] },
-    { cam: { pos: [-1.5, 1.6, 4.0], pos2: [-1.2, 1.9, 5.2], look: [0.3, 1.0, 0] }, talk: 'shayla', lines: [['SHAYLA', 'Now. About that reunion. Somebody owes me a fucking birthday.']] },
+    { cam: { pos: [-1.5, 1.6, 4.0], pos2: [-1.2, 1.9, 5.2], look: [0.3, 1.0, 0] }, talk: 'shayla', lines: [['SHAYLA', 'Now. About that reunion. Somebody owes me a fucking steakburger.']] },
   ],
   reunion: [
     { set: 'backyard', card: ['THE REUNION', 'Sunday · 5:30 PM · Home'], cast: { kelly: [-1.45, -1.25, 0.25, 'Idle_Talking_Loop'], shayla: [-0.45, -1.3, 0, 'Idle_Loop'], kennedy: [0.55, -1.3, -0.12, 'Idle_Loop'], kambree: [1.55, -1.2, -0.3, 'Idle_Loop'], kayleigh: [2.35, 0.25, -1.25, 'Idle_Loop'] }, cam: { pos: [0.4, 2.2, 5.6], pos2: [0.3, 1.8, 4.4], look: [0.2, 1.1, -0.9] }, lines: [['ALL', '🍔 120/120 steakburgers · 🥤 120/120 Cokes · zero family members eaten.']] },
@@ -121,8 +121,8 @@ export const CINES = {
     { cam: { close: 'kayleigh', dist: 0.72, side: -0.12 }, talk: 'kayleigh', lines: [['KAYLEIGH', 'Kambree. She shot like four hundred zombies to get those.'], ['KAYLEIGH', "Also can we please never do Wilson Park at night again? I'm still finding glitter in my hair. Zombie glitter."]] },
     { cam: { close: 'shayla', dist: 0.7, side: 0.15 }, talk: 'shayla', lines: [['SHAYLA', 'Kambree, eat the fucking pickle or I put you in the cooler with the doll.'], ['KAMBREE', '...Fine. It’s actually good. Shut up.']] },
     { cam: { close: 'kennedy', dist: 0.72, side: -0.15 }, talk: 'kennedy', lines: [['KENNEDY', 'Babe, I told the guys at the gun show about you. They want an autograph. And maybe a calendar.']] },
-    { cam: { close: 'kelly', dist: 0.85, side: 0.12, h: 0.06 }, talk: 'kelly', peace: true, lines: [['KELLY', "Group photo! Everybody say 'PARABELLUM!' ✌️"], ['KELLY', 'Ooh, also! Who wants their birthday present? I found another one!']] },
-    { cam: { pos: [0.4, 1.8, 4.6], pos2: [0.2, 2.4, 6.6], look: [0.2, 1.5, -1.0] }, fx: 'fireworks', dance: true, lines: [['ALL', 'NO.'], ['SHAYLA', 'Happy fucking birthday to me. Love you idiots.']], card: ['THE END', 'Happy Birthday, Shayla ♥'] },
+    { cam: { close: 'kelly', dist: 0.85, side: 0.12, h: 0.06 }, talk: 'kelly', peace: true, lines: [['KELLY', "Group photo! Everybody say 'PARABELLUM!' ✌️"], ['KELLY', 'Ooh, also! Who wants a present? I found another one!']] },
+    { cam: { pos: [0.4, 1.8, 4.6], pos2: [0.2, 2.4, 6.6], look: [0.2, 1.5, -1.0] }, fx: 'fireworks', dance: true, lines: [['ALL', 'NO.'], ['SHAYLA', 'Best fucking reunion ever. Love you idiots.']], card: ['THE END', 'Welcome home, Shayla ♥'] },
   ],
   short: [
     { set: 'backyard', card: ['THE REUNION', 'Short Order Ending'], cast: { kelly: [-1.45, -1.25, 0.25, 'Idle_Loop'], shayla: [-0.45, -1.3, 0, 'Idle_Loop'], kennedy: [0.55, -1.3, -0.12, 'Idle_Loop'], kambree: [1.55, -1.2, -0.3, 'Idle_Talking_Loop'], kayleigh: [2.35, 0.25, -1.25, 'Idle_Loop'] }, cam: { pos: [0.4, 2.2, 5.6], pos2: [0.3, 1.8, 4.4], look: [0.2, 1.1, -0.9] }, lines: [['KAMBREE', "That's it? That's the haul? For the WHOLE family?"]] },
