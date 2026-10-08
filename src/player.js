@@ -13,10 +13,12 @@ import { S, up } from './save.js';
 import { clamp, rand, angDiff } from './util.js';
 
 const tmp = new THREE.Vector3(), tmp2 = new THREE.Vector3(), fwd = new THREE.Vector3(), rgt = new THREE.Vector3();
+const PITCH_MAX = 1.05; // ~60 degrees
+const wrapA = a => { a = (a + Math.PI) % (Math.PI * 2); if (a < 0) a += Math.PI * 2; return a - Math.PI; };
 const ASSIST = { off: [0, 0, 0], low: [0.05, 0.6, 0.025], medium: [0.09, 1.3, 0.04], high: [0.13, 2.4, 0.06] }; // [cone rad, pull strength, magnetism rad]
 export class Player {
   constructor() {
-    this.pos = new THREE.Vector3(); this.yaw = 0; this.pitch = 0; this.vel = new THREE.Vector3(); this.bob = 0; this.kick = 0; this.shake = 0;
+    this.pos = new THREE.Vector3(); this.yaw = 0; this.pitch = 0; this.lookYaw = 0; this.lookIdle = 9; this.turn = null; this.turns = 0; this.vel = new THREE.Vector3(); this.bob = 0; this.kick = 0; this.shake = 0;
     setGunEnv(E.renderer, RoomEnvironment);
     this.VM = {}; this.vmRoot = new THREE.Group(); E.camera.add(this.vmRoot); for (const k of [...ORDER, 'bedpan']) { const vm = createVM(k); vm.visible = false; this.vmRoot.add(vm); this.VM[k] = vm; }
     this.casings = new Casings(E.scene); this.shellQ = []; this.refreshVM();
@@ -24,7 +26,7 @@ export class Player {
     this.flashlight = new THREE.SpotLight(0xfff4e0, 0, 28, 0.5, 0.55, 1.5); this.flashlight.position.set(0.15, -0.1, 0); E.camera.add(this.flashlight); this.flashlight.target.position.set(0, 0, -5); E.camera.add(this.flashlight.target);
   }
   reset(spawn, yaw = 0) {
-    this.pos.set(spawn.x, 0, spawn.z); this.yaw = yaw; this.pitch = 0; this.vel.set(0, 0, 0);
+    this.pos.set(spawn.x, 0, spawn.z); this.yaw = yaw; this.pitch = 0; this.vel.set(0, 0, 0); this.turn = null; this.lookYaw = 0; this.lookIdle = 9; this.turns = 0; this.lastHurtFrom = null;
     this.maxHp = 100 + up('hp') * 25; this.hp = this.maxHp; this.dead = false; this.reviveUsed = false; this.saltsUsed = false; this.invuln = 0;
     this.ammo = {}; for (const k of ORDER) { const w = this.wstats(k); this.ammo[k] = { mag: w.mag, res: w.reserve }; }
     this.weapon = 'pistol'; this.cool = 0; this.reloading = 0; this.swapT = 0; this.meleeT = 0; this.meleeCd = 0; this.shushed = 0; this.slow = 0; this.loaned = false;
@@ -52,7 +54,7 @@ export class Player {
   shush() { this.shushed = 3; }
   hurt(dmg, src) {
     if (this.dead || this.invuln > 0 || G.mode !== 'play') return; dmg *= Math.pow(0.88, up('armor'));
-    this.hp -= dmg; this.hurtT = 0.5; this.shake = 0.25; this.lastHurt = G.time; sfx('hurt'); G.onHurt && G.onHurt(dmg);
+    this.hp -= dmg; this.hurtT = 0.5; this.shake = 0.25; this.lastHurt = G.time; sfx('hurt'); G.onHurt && G.onHurt(dmg, src);
     if (src && src.pos) { tmp.subVectors(this.pos, src.pos).setY(0).normalize(); this.vel.addScaledVector(tmp, 2.5); }
     if (this.hp <= 0) {
       if (G.kennedy && G.kennedy.active && !G.kennedy.down && !this.reviveUsed) { this.reviveUsed = true; this.hp = this.maxHp * 0.5; this.invuln = 2.5; G.kennedy.reviveBark(); return; }
@@ -71,9 +73,18 @@ export class Player {
     const assist = ASSIST[S.data.settings.aim] || ASSIST.medium;
     const tgt = this.findTarget(assist[0] * 1.6); this.lockTarget = tgt && tgt.ang < assist[0] ? tgt : null;
     if (this.lockTarget && (Math.abs(lx) + Math.abs(ly) > 0 || I.move.x || I.move.y)) slowK = 0.7; // slowdown near targets
-    this.yaw -= lx * slowK; this.pitch = clamp(this.pitch - ly * slowK, -1.2, 1.2);
-    if (this.lockTarget && assist[1] > 0 && (I.touchMode || S.data.settings.aim === 'high')) { // gentle pull toward head
-      const t = this.lockTarget; const k = Math.min(1, assist[1] * dt * (I.fire || G.autoFiring ? 1.6 : 1)); this.yaw += angDiff(this.yaw, t.yaw) * k; this.pitch += (t.pitch - this.pitch) * k * 0.8;
+    // full 360: yaw is unlimited (wrapped to -PI..PI), pitch clamped to +/-60 degrees
+    const dYaw = -lx * slowK; this.yaw += dYaw; this.lookYaw += dYaw; this.pitch = clamp(this.pitch - ly * slowK, -PITCH_MAX, PITCH_MAX);
+    if (lx || ly) this.lookIdle = 0; else this.lookIdle += dt;
+    if (p.turn180 && !this.turn) this.turn = { t: 0, dur: 0.25, done: 0 };
+    if (this.turn) { // smooth 180 quick-turn (ease in-out); user look input still adds on top
+      const T = this.turn; T.t = Math.min(T.dur, T.t + dt); const u = T.t / T.dur, e = u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
+      const step = Math.PI * e - T.done; T.done += step; this.yaw += step; this.lookYaw += step; this.pitch *= 0.85; if (T.t >= T.dur) { this.turn = null; this.turns++; }
+    }
+    this.yaw = wrapA(this.yaw);
+    // gentle pull toward a locked head, but never while the player is actively turning (it used to tug the view back)
+    if (this.lockTarget && assist[1] > 0 && !this.turn && this.lookIdle > 0.25 && (I.touchMode || S.data.settings.aim === 'high')) {
+      const t = this.lockTarget; const k = Math.min(1, assist[1] * dt * (I.fire || G.autoFiring ? 1.6 : 1)); this.yaw = wrapA(this.yaw + angDiff(this.yaw, t.yaw) * k); this.pitch += (t.pitch - this.pitch) * k * 0.8;
     }
     // move
     const coffee = 1 + up('coffee') * 0.15; let sp = (I.sprint ? 6.2 : 4.4) * coffee * (this.slow > 0 ? 0.55 : 1) * (G.level && G.level.slowZone && G.level.slowZone(this.pos) ? 0.6 : 1);

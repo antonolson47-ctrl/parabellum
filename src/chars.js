@@ -295,7 +295,7 @@ const M = {
   silver: () => mat('silver', () => new THREE.MeshStandardMaterial({ color: 0xc8ccd2, roughness: 0.2, metalness: 1 })),
   lens: () => mat('lens', () => new THREE.MeshStandardMaterial({ color: 0x9fb8c8, roughness: 0.05, metalness: 0.2, transparent: true, opacity: 0.22, depthWrite: false })),
   aviLens: () => mat('avil', () => new THREE.MeshStandardMaterial({ color: 0x3a2a18, roughness: 0.05, metalness: 0.6, transparent: true, opacity: 0.8 })),
-  tortoise: () => mat('tort', () => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'); x.fillStyle = '#5a3412'; x.fillRect(0, 0, 64, 64); for (let i = 0; i < 40; i++) { x.fillStyle = Math.random() < 0.5 ? '#2a1606' : '#a8692a'; x.beginPath(); x.arc(Math.random() * 64, Math.random() * 64, 2 + Math.random() * 6, 0, 7); x.fill(); } const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return new THREE.MeshStandardMaterial({ map: t, roughness: 0.3 }); }),
+  tortoise: () => mat('tort', () => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'); x.fillStyle = '#5a3412'; x.fillRect(0, 0, 64, 64); for (let i = 0; i < 40; i++) { x.fillStyle = Math.random() < 0.5 ? '#2a1606' : '#a8692a'; x.beginPath(); x.arc(Math.random() * 64, Math.random() * 64, 2 + Math.random() * 6, 0, 7); x.fill(); } const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(36, 36); /* frame UVs are in metres -> tile so every frame shows the mottled pattern */ return new THREE.MeshStandardMaterial({ map: t, roughness: 0.3 }); }),
   tube: () => mat('tube', () => new THREE.MeshStandardMaterial({ color: 0x1b1b1f, roughness: 0.45 })),
   white: () => mat('white', () => new THREE.MeshStandardMaterial({ color: 0xf2f2f0, roughness: 0.5 })),
   pink: () => mat('pink', () => new THREE.MeshStandardMaterial({ color: 0xff5fa8, roughness: 0.8 })),
@@ -306,14 +306,28 @@ function frameRing(w, h, r, t, d) {
   rr(s, w, h, r); const hole = new THREE.Path(); rr(hole, w - t * 2, h - t * 2, Math.max(0.001, r - t)); s.holes.push(hole);
   return new THREE.ExtrudeGeometry(s, { depth: d, bevelEnabled: false, curveSegments: 6 });
 }
-function glasses(kind, faceZ, eyeY, eyeX, headW, temples = true) {
+// half-width of the head at a given depth (z) around eye level, from the bind-pose mesh (cached per base body)
+const SIDE_CACHE = {};
+function headSide(info, eyeY) {
+  const key = info.H + ':' + eyeY.toFixed(4); if (SIDE_CACHE[key]) return SIDE_CACHE[key];
+  const pos = info.body.geometry.attributes.position; const zs = []; for (let z = 0.1; z >= -0.06; z -= 0.01) zs.push(z);
+  const w = zs.map(z => { let m = 0; for (let i = 0; i < pos.count; i++) if (Math.abs(pos.getY(i) - eyeY - 0.006) < 0.007 && Math.abs(pos.getZ(i) - z) < 0.006) m = Math.max(m, Math.abs(pos.getX(i))); return m; });
+  const f = z => { if (z >= zs[0]) return w[0]; for (let i = 1; i < zs.length; i++) if (z >= zs[i]) { const t = (z - zs[i]) / (zs[i - 1] - zs[i]); return w[i] + (w[i - 1] - w[i]) * t; } return w[w.length - 1]; };
+  return (SIDE_CACHE[key] = f);
+}
+function glasses(kind, faceZ, eyeY, eyeX, headW, temples = true, side = null) {
   const g = new THREE.Group(); const isAvi = kind === 'aviator';
   const fm = kind === 'tortoise' ? M.tortoise() : isAvi ? M.gold() : M.black();
   const w = isAvi ? 0.044 : 0.046, h = isAvi ? 0.036 : 0.03, t = isAvi ? 0.0025 : 0.005;
   for (const sx of [-1, 1]) {
     const ring = new THREE.Mesh(frameRing(w, h, isAvi ? 0.014 : 0.007, t, 0.004), fm); ring.position.set(sx * eyeX, 0, 0); if (isAvi) ring.rotation.z = sx * 0.12; g.add(ring);
     const lens = new THREE.Mesh(new THREE.PlaneGeometry(w - t, h - t), isAvi ? M.aviLens() : M.lens()); lens.position.set(sx * eyeX, 0, 0.002); g.add(lens);
-    const temple = new THREE.Mesh(new THREE.BoxGeometry(0.003, 0.004, 0.11), fm); temple.position.set(sx * (headW), 0.006, -0.055); temple.rotation.y = sx * 0.06; if (temples) g.add(temple);
+    if (temples && side) { // hinge on the frame's outer edge, then the arm hugs the side of the head back to the ear
+      const hx = eyeX + w / 2 - 0.001, pts = [V(sx * hx, h * 0.25, -0.002)];
+      for (const zz of [-0.02, -0.045, -0.07, -0.095]) { const zw = faceZ + zz; pts.push(V(sx * Math.max(hx + 0.002, side(zw) + 0.0028), h * 0.25 + 0.003 * (-zz / 0.095), zz)); }
+      const arm = new THREE.Mesh(taperedTube(pts, 0.0021, 0.0019, 16, 5), fm); g.add(arm);
+      const hinge = new THREE.Mesh(new THREE.BoxGeometry(0.006, 0.006, 0.006), fm); hinge.position.set(sx * hx, h * 0.25, -0.001); g.add(hinge);
+    } else if (temples) { const temple = new THREE.Mesh(new THREE.BoxGeometry(0.003, 0.004, 0.11), fm); temple.position.set(sx * (headW), 0.006, -0.055); temple.rotation.y = sx * 0.06; g.add(temple); }
   }
   const br = new THREE.Mesh(new THREE.BoxGeometry(eyeX * 2 - w + 0.004, 0.004, 0.004), fm); br.position.set(0, h * 0.28, 0.002); g.add(br);
   g.position.set(0, eyeY, faceZ);
@@ -363,6 +377,79 @@ function faceProfile(info) {
   const g = info.body.geometry, pos = g.attributes.position; return (y, x = 0, tol = 0.006) => { let z = -1; for (let i = 0; i < pos.count; i++) { if (Math.abs(pos.getY(i) - y) < tol && Math.abs(pos.getX(i) - x) < tol * 1.5) z = Math.max(z, pos.getZ(i)); } return z; };
 }
 function surfZ(info, y, x, tol = 0.012) { return faceProfile(info)(y, x, tol); }
+
+// ---------- facial hair: a skinned, surface-fitted strand mustache ----------
+// Built in bind-pose model space on top of the real upper-lip surface (raycast), then bound to the same skeleton with
+// the lip's own skin weights, so it moves exactly like the skin under it (Head + a little neck_01) in every animation.
+const MUST_CACHE = {};
+function lipFeatures(info, eyeY) {
+  // centre-line profile below the eyes -> nose tip, subnasale (under the nose), mouth seam
+  const pos = info.body.geometry.attributes.position; const zAt = y => { let z = -1; for (let i = 0; i < pos.count; i++) if (Math.abs(pos.getY(i) - y) < 0.0022 && Math.abs(pos.getX(i)) < 0.006) z = Math.max(z, pos.getZ(i)); return z; };
+  const prof = []; for (let d = 0.02; d <= 0.1; d += 0.002) prof.push([eyeY - d, zAt(eyeY - d)]);
+  const ok = prof.filter(p => p[1] > 0); let tip = ok[0]; for (const p of ok) if (p[0] > eyeY - 0.065 && p[1] > tip[1]) tip = p;
+  let sub = null; for (const p of ok) if (p[0] < tip[0] - 0.006 && p[0] > tip[0] - 0.03 && (!sub || p[1] < sub[1])) sub = p;
+  if (!sub) sub = [tip[0] - 0.016, tip[1] - 0.02];
+  let lipTop = null; for (const p of ok) if (p[0] < sub[0] - 0.002 && p[0] > sub[0] - 0.016 && (!lipTop || p[1] > lipTop[1])) lipTop = p;
+  let seam = null; for (const p of ok) if (lipTop && p[0] < lipTop[0] - 0.004 && p[0] > lipTop[0] - 0.02 && (!seam || p[1] < seam[1])) seam = p;
+  return { tipY: tip[0], subY: sub[0], lipY: lipTop ? lipTop[0] : sub[0] - 0.009, seamY: seam ? seam[0] : sub[0] - 0.02 };
+}
+function faceSampler(info, y0, y1, xr) {
+  // front-most surface z(x,y) of the face region, by raycasting a small triangle subset of the bind-pose body
+  const g = info.body.geometry, pos = g.attributes.position, idx = g.index.array; const P = []; const inR = i => { const y = pos.getY(i), x = pos.getX(i); return y > y0 && y < y1 && Math.abs(x) < xr && pos.getZ(i) > 0.03; };
+  for (let t = 0; t < idx.length; t += 3) { const a = idx[t], b = idx[t + 1], c = idx[t + 2]; if (!(inR(a) || inR(b) || inR(c))) continue; for (const k of [a, b, c]) P.push(pos.getX(k), pos.getY(k), pos.getZ(k)); }
+  const mg = new THREE.BufferGeometry(); mg.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); const mesh = new THREE.Mesh(mg, new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }));
+  const rc = new THREE.Raycaster(); const o = V(), d = V(0, 0, -1), n = V(); const hits = [];
+  return (x, y, outN) => { o.set(x, y, 0.4); rc.set(o, d); hits.length = 0; mesh.raycast(rc, hits); if (!hits.length) return null; let h = hits[0]; for (const q of hits) if (q.point.z > h.point.z) h = q; if (outN) { outN.copy(h.face.normal); if (outN.z < 0) outN.negate(); } return h.point.z; };
+}
+function mustacheGeometry(info, eyeY) {
+  const key = info.H + ':' + eyeY.toFixed(4); if (MUST_CACHE[key]) return MUST_CACHE[key];
+  const F = lipFeatures(info, eyeY); const S = faceSampler(info, F.seamY - 0.03, F.tipY + 0.01, 0.06); const rnd = mulberry(11);
+  // outline (model units, relative to centre line): classic "chevron" — sits right under the nose, hangs just over the
+  // top of the lip, reaches a little past the mouth corners and droops slightly at the tips
+  const HW = 0.03, topC = F.subY - 0.0015, botC = (F.lipY + F.seamY) / 2 + 0.001;
+  const top = u => topC + 0.004 * Math.abs(u) - 0.010 * Math.pow(Math.abs(u), 2.2);           // follows the nostril line, then curves down
+  const bot = u => botC - 0.0065 * Math.pow(Math.abs(u), 1.6);                                   // drooping lower edge
+  const thick = u => Math.max(0, top(u) - bot(u)) * (1 - Math.pow(Math.abs(u), 2.4) * 0.55 - Math.pow(Math.abs(u), 8) * 0.4); // fuller in the middle, tapers to the tips
+  const surf = (x, y, off, nOut) => { const nn = nOut || V(); let z = S(x, y, nn); if (z === null) { z = S(x * 0.8, y, nn); if (z === null) return null; } return V(x, y, z).addScaledVector(nn, off); };
+  const geos = [];
+  // 1) base pad: thin shell that hugs the skin so no skin shows between strands
+  { const NU = 26, NV = 7; const P = [], UV = [], I = [];
+    for (let j = 0; j <= NV; j++) for (let i = 0; i <= NU; i++) { const u = (i / NU * 2 - 1) * 0.93, v = 0.06 + j / NV * 0.78; const yt = top(u), yb = yt - thick(u); const y = yt + (yb - yt) * v; const x = u * HW;
+      const off = 0.0009 + 0.0012 * Math.sin(Math.PI * v) * (1 - Math.abs(u) * 0.6); const p = surf(x, y, off) || V(x, y, 0.09); P.push(p.x, p.y, p.z); UV.push(v, (u + 1) / 2); }
+    for (let j = 0; j < NV; j++) for (let i = 0; i < NU; i++) { const a = j * (NU + 1) + i, b = a + 1, c = a + NU + 1, d = c + 1; I.push(a, c, b, b, c, d); }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(UV, 2)); g.setIndex(I); g.computeVertexNormals(); geos.push(g); }
+  // 2) strands: short tapered hairs rooted under the nose, combed down and out, lying on the skin
+  const n = V(); const N = 700;
+  for (let s = 0; s < N; s++) {
+    const u = (rnd() * 2 - 1) * 0.98; const yt = top(u), th = thick(u); if (th < 0.0015) continue;
+    const v0 = Math.pow(rnd(), 1.5) * 0.6; const x0 = u * HW, y0 = yt - th * v0; const len = th * (1.08 - v0) * (0.8 + rnd() * 0.45); // a few overshoot the edge -> soft, hairy fringe
+    const ang = -Math.PI / 2 + Math.sign(u) * (0.25 + Math.abs(u) * 0.55) + (rnd() - 0.5) * 0.25; const dx = Math.cos(ang), dy = Math.sin(ang);
+    const pts = []; let ok = true;
+    for (let k = 0; k <= 3; k++) { const t = k / 3; const lift = 0.0011 + 0.0017 * Math.sin(Math.PI * Math.min(1, t * 1.2)) + rnd() * 0.0004; const p = surf(x0 + dx * len * t, y0 + dy * len * t, lift, n); if (!p) { ok = false; break; } pts.push(p); }
+    if (!ok) continue;
+    const r0 = 0.00042 + rnd() * 0.00022; const g = taperedTube(pts, r0, 0.0001, 3, 3); const shade = 0.75 + rnd() * 0.5; const uv = g.attributes.uv; for (let q = 0; q < uv.count; q++) uv.setY(q, uv.getY(q) * 0.2 + shade * 0.8); geos.push(g);
+  }
+  const merged = mergeGeometries(geos.map(g => { g = g.index ? g : g; if (!g.attributes.uv) g.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(g.attributes.position.count * 2), 2)); if (g.attributes.normal === undefined) g.computeVertexNormals(); return g; }));
+  // skin weights: copy from the nearest bind-pose face vertex (lip skin is ~85% Head, ~15% neck_01)
+  const bg = info.body.geometry, bpos = bg.attributes.position, bsi = bg.attributes.skinIndex, bsw = bg.attributes.skinWeight; const cand = [];
+  for (let i = 0; i < bpos.count; i++) { const y = bpos.getY(i), x = bpos.getX(i), z = bpos.getZ(i); if (y > F.seamY - 0.025 && y < F.tipY + 0.01 && Math.abs(x) < 0.05 && z > 0.04) cand.push(i); }
+  const mp = merged.attributes.position, SI = new Uint16Array(mp.count * 4), SW = new Float32Array(mp.count * 4);
+  for (let i = 0; i < mp.count; i++) { const x = mp.getX(i), y = mp.getY(i), z = mp.getZ(i); let best = cand[0], bd = 1e9; for (const c of cand) { const d = (bpos.getX(c) - x) ** 2 + (bpos.getY(c) - y) ** 2 + (bpos.getZ(c) - z) ** 2; if (d < bd) { bd = d; best = c; } }
+    for (let k = 0; k < 4; k++) { SI[i * 4 + k] = bsi.getComponent(best, k); SW[i * 4 + k] = bsw.getComponent(best, k); } }
+  merged.setAttribute('skinIndex', new THREE.BufferAttribute(SI, 4)); merged.setAttribute('skinWeight', new THREE.BufferAttribute(SW, 4));
+  merged.computeBoundingBox(); merged.computeBoundingSphere(); merged.userData.features = F;
+  return (MUST_CACHE[key] = merged);
+}
+function mustacheMaterial(color) {
+  const m = new THREE.MeshStandardMaterial({ color: new THREE.Color(color).multiplyScalar(1.35), roughness: 0.55, metalness: 0 });
+  m.onBeforeCompile = sh => {
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\n' + NOISE)
+      .replace('#include <map_fragment>', '#include <map_fragment>\n{ vec2 u = vUvS; float s = pbN(vec3(u.y*180., u.x*5., 0.)); diffuseColor.rgb *= 0.7 + 0.55*s; }')
+      .replace('void main() {', 'varying vec2 vUvS;\nvoid main() {');
+    sh.vertexShader = sh.vertexShader.replace('void main() {', 'varying vec2 vUvS;\nvoid main() {').replace('#include <begin_vertex>', '#include <begin_vertex>\nvUvS = uv;');
+  };
+  m.customProgramCacheKey = () => 'pbmust'; return m;
+}
 
 // ---------- character spec presets ----------
 const C = s => new THREE.Color(s);
@@ -442,12 +529,12 @@ export function makeCharacter(key, opts = {}) {
   const attach = (obj, b) => { root.updateMatrixWorld(true); obj.updateMatrixWorld(true); (b || head).attach(obj); obj.traverse(o => { if (o.isMesh) { o.castShadow = true; } }); ch.acc.push(obj); return obj; };
   // scene is in bind pose; accessory world coords == model coords since root at origin
   for (const a of spec.acc || []) {
-    if (a.startsWith('glasses')) { const gl = glasses(a.split('_')[1], eyeFront + 0.016, eyeY, eyeX * 1.02, 0.068); attach(gl); }
+    if (a.startsWith('glasses')) { const gl = glasses(a.split('_')[1], eyeFront + 0.016, eyeY, eyeX * 1.02, 0.068, true, headSide(info, eyeY)); attach(gl); }
     if (a === 'aviators_head') { const gl = glasses('aviator', eyeFront + 0.03, eyeY + 0.105, eyeX, 0.08, false); gl.rotation.x = -0.55; gl.position.z -= 0.0; attach(gl); }
-    if (a === 'mustache') {
-      const mz = prof(eyeY - 0.066); const pts = []; for (let i = 0; i <= 8; i++) { const t = i / 8 * 2 - 1; pts.push(V(t * 0.026, eyeY - 0.066 - Math.abs(t) ** 1.6 * 0.012, mz + 0.004 - Math.abs(t) * 0.012)); }
-      const geo = taperedTube(pts, 0.0035, 0.0035, 16, 6); const pa = geo.attributes.position; for (let i = 0; i < pa.count; i++) { const t = Math.abs(pa.getX(i)) / 0.026; const s = 1 - t * 0.6; }
-      attach(new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: spec.brow || '#160e08', roughness: 0.8 })));
+    if (a === 'mustache') { // skinned to the same bones as the lip skin -> stays glued to the upper lip in every pose
+      const mg = mustacheGeometry(info, eyeY); const mm = new THREE.SkinnedMesh(mg, mustacheMaterial(spec.curls || (spec.hair && spec.hair.color) || spec.brow || '#1d140d'));
+      mm.name = 'Mustache'; mm.position.copy(body.position); mm.quaternion.copy(body.quaternion); mm.scale.copy(body.scale);
+      mm.bind(body.skeleton, body.bindMatrix); mm.frustumCulled = false; mm.castShadow = false; mm.receiveShadow = true; body.parent.add(mm); ch.mustache = mm;
     }
     if (a === 'hoops') for (const sx of [-1, 1]) { const t = new THREE.Mesh(new THREE.TorusGeometry(0.011, 0.0015, 6, 20), M.gold()); t.position.set(sx * 0.077, eyeY - 0.045, -0.01); t.rotation.y = Math.PI / 2; attach(t); }
     if (a === 'bun') {

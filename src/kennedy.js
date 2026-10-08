@@ -21,7 +21,7 @@ export class Kennedy {
     E.scene.add(this.root);
   }
   arrive(p, yaw) {
-    this.active = true; this.root.visible = true; this.pos.set(p.x, 0, p.z); this.yaw = yaw || 0; this.maxHp = this.hp = 220; this.down = false; this.downT = 0;
+    this.active = true; this.root.visible = true; this.pos.set(p.x, 0, p.z); this.yaw = yaw || 0; this.fyaw = yaw || 0; this.maxHp = this.hp = 220; this.down = false; this.downT = 0;
     this.target = null; this.tT = 0; this.fireT = 0; this.burst = 0; this.shots = 0; this.reloadT = 0; this.barkT = 4; this.idleT = 20; this.moving = false;
     this.ch.play('Pistol_Idle_Loop', 0); this.say(lines.arrive(), 4.5, 3);
   }
@@ -36,7 +36,11 @@ export class Kennedy {
     if (!this.active) return; const pl = G.player; this.barkT -= dt; this.idleT -= dt;
     if (this.down) { this.downT -= dt; this.ch.mixer.update(dt); this.syncRifle(); if (this.downT <= 0) { this.down = false; this.hp = this.maxHp * 0.6; this.say(lines.up()); this.ch.play('Pistol_Idle_Loop', 0.3); } return; }
     // follow: stay ~3-5m behind/beside Shayla
-    const fx = -Math.sin(pl.yaw), fz = -Math.cos(pl.yaw); const want = tmp.set(pl.pos.x - fx * 3 + fz * 1.8, 0, pl.pos.z - fz * 3 - fx * 1.8);
+    // follow heading: where Shayla is WALKING (smoothed), not where she's looking, so spinning the camera around
+    // doesn't make him run laps around her; he holds position and covers her back
+    if (this.fyaw === undefined) this.fyaw = pl.yaw;
+    const pv = Math.hypot(pl.vel.x, pl.vel.z); if (pv > 0.8) this.fyaw += angDiff(this.fyaw, Math.atan2(-pl.vel.x, -pl.vel.z)) * Math.min(1, dt * 1.5);
+    const fx = -Math.sin(this.fyaw), fz = -Math.cos(this.fyaw); const want = tmp.set(pl.pos.x - fx * 3 + fz * 1.8, 0, pl.pos.z - fz * 3 - fx * 1.8);
     if (!G.world.isOpen(want.x, want.z)) want.set(pl.pos.x - fx * 2, 0, pl.pos.z - fz * 2);
     let dx = want.x - this.pos.x, dz = want.z - this.pos.z; let d = Math.hypot(dx, dz); const dpl = this.pos.distanceTo(pl.pos);
     if (dpl > 26) { this.pos.set(pl.pos.x - fx * 2.5, 0, pl.pos.z - fz * 2.5); G.world.collide(this.pos, 0.35); d = 0; }

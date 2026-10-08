@@ -93,6 +93,25 @@ html.pagezoomed .resetv{background:#c8231d;border-color:#ffd84a;color:#fff;anima
 .marker{position:absolute;transform:translate(-50%,-50%);font-family:'Black Ops One';font-size:13px;color:#7dffa8;text-shadow:0 0 6px #000;text-align:center;display:none}
 .marker:before{content:"";display:block;margin:0 auto 2px;width:16px;height:16px;border:2px solid #7dffa8;transform:rotate(45deg);box-shadow:0 0 8px #7dffa8}
 .portraitHint{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);background:rgba(0,0,0,.75);padding:10px 16px;border-radius:10px;font-size:16px;text-align:center;display:none}
+
+/* 180 quick-turn */
+.btn.turn{right:calc(104px + env(safe-area-inset-right));bottom:calc(172px + env(safe-area-inset-bottom));width:50px;height:50px;background:rgba(20,24,26,.5);border-color:rgba(255,216,74,.75)}
+.btn.turn .lbl{bottom:-15px;color:#ffe9a0}
+/* off-screen threat arrows + directional hit flash */
+.threats{position:absolute;inset:0;overflow:hidden}
+.thr{position:absolute;left:0;top:0;width:48px;height:48px;margin:-24px 0 0 -24px;display:none;will-change:transform,opacity}
+.thr svg{position:absolute;left:0;top:0;display:block}
+.thr.close svg{animation:thrp .35s infinite alternate}
+@keyframes thrp{to{transform:scale(1.22)}} /* transform only: animating CSS filters crashed WebKit */
+.hitdir i{position:absolute;opacity:0;pointer-events:none}
+.hitdir .hl{left:0;top:0;bottom:0;width:22vw;background:linear-gradient(90deg,rgba(220,0,0,.85),rgba(220,0,0,0))}
+.hitdir .hr{right:0;top:0;bottom:0;width:22vw;background:linear-gradient(270deg,rgba(220,0,0,.85),rgba(220,0,0,0))}
+.hitdir .ht{left:0;right:0;top:0;height:22vh;background:linear-gradient(180deg,rgba(220,0,0,.7),rgba(220,0,0,0))}
+.hitdir .hb{left:0;right:0;bottom:0;height:26vh;background:linear-gradient(0deg,rgba(220,0,0,.85),rgba(220,0,0,0))}
+.lookhint{position:absolute;right:calc(30% + env(safe-area-inset-right));top:32%;transform:translateY(-50%);max-width:36vw;text-align:center;display:none;flex-direction:column;align-items:center;gap:1px;padding:6px 12px;border-radius:12px;background:rgba(0,0,0,.5);border:1.5px dashed rgba(255,255,255,.6);font-family:'Barlow Condensed';font-weight:800;font-size:15px;letter-spacing:1px;color:#fff;text-shadow:0 1px 2px #000;transition:opacity .4s}
+.lookhint .hand{display:inline-block;font-size:18px;animation:lh 1.4s ease-in-out infinite}
+.lookhint small{font-size:12px;opacity:.85;font-weight:700}
+@keyframes lh{0%,100%{transform:translateX(-10px)}50%{transform:translateX(10px)}}
 /* screens */
 .screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;pointer-events:auto}
 .screen *{pointer-events:auto}
@@ -156,6 +175,8 @@ html.pagezoomed .resetv{background:#c8231d;border-color:#ffd84a;color:#fff;anima
  .ammo{right:calc(20px + env(safe-area-inset-right));bottom:calc(220px + env(safe-area-inset-bottom))}
  .autofire{right:calc(20px + env(safe-area-inset-right));bottom:calc(200px + env(safe-area-inset-bottom))}
  .btn.melee{bottom:calc(140px + env(safe-area-inset-bottom))}
+ .btn.turn{right:calc(158px + env(safe-area-inset-right));bottom:calc(166px + env(safe-area-inset-bottom));width:48px;height:48px}
+ .lookhint{top:46%;right:4%;max-width:60vw;font-size:13px}
  .sub{max-width:90vw;bottom:calc(150px + env(safe-area-inset-bottom))}
  .rule{top:calc(172px + env(safe-area-inset-top))}
  .toast{top:calc(158px + env(safe-area-inset-top))}

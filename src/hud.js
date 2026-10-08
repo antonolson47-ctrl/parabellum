@@ -19,11 +19,15 @@ export function buildHUD(root) {
   <div class="res"><div class="chip" id="chipf">${FINGER}<span id="fingers">0</span></div><div class="chip" id="chipb"><span class="e">🍔</span><span id="burgers">0/120</span></div><div class="chip" id="chipc"><span class="e">🥤</span><span id="cokes">0/120</span></div></div>
   <div class="pausebtn pe" id="pausebtn"><i></i><i></i></div>
   <div class="resetv pe" id="resetv" title="Reset view (zoom + camera)"><svg viewBox="0 0 24 24" width="17" height="17"><circle cx="10" cy="10" r="6.2" fill="none" stroke="#fff" stroke-width="2.2"/><path d="M14.6 14.6l6 6" stroke="#fff" stroke-width="2.8" stroke-linecap="round"/><path d="M10 6.6v6.8M6.6 10h6.8" stroke="#ffd84a" stroke-width="1.8"/></svg><span>RESET</span></div>
+  <div class="threats" id="threats">${'<i class="thr"><svg viewBox="0 0 48 48" width="48" height="48"><path d="M7 7L44 24 7 41l9-17z" fill="#ff2a1f" stroke="#ffd0c8" stroke-width="2" stroke-linejoin="round"/><path d="M7 7L44 24 7 41l9-17z" fill="none" stroke="#5a0000" stroke-width="0.8" stroke-linejoin="round"/></svg></i>'.repeat(8)}</div>
+  <div class="hitdir" id="hitdir"><i class="hl"></i><i class="hr"></i><i class="ht"></i><i class="hb"></i></div>
   <div class="xh" id="xh"></div><div class="hitm" id="hitm"></div>
   <div class="lock" id="lock"><i></i><i></i><i></i><i></i></div>
   <div class="marker" id="marker">EXIT</div>
   <div id="floats"></div>
   <div class="stick"><div class="knob"></div><span class="lbl">Move</span></div>
+  <div class="btn turn" id="bturn" title="Quick turn 180 (C)"><svg viewBox="0 0 32 32" width="30" height="30"><path d="M9 27V13a7 7 0 0 1 14 0v7" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/><path d="M17 18.5l6 7.5 6-7.5z" fill="#fff"/></svg><span class="lbl">180°</span></div>
+  <div class="lookhint" id="lookhint"><span><span class="hand">👆</span> DRAG HERE TO LOOK AROUND</span><small>⟵ turn all the way around · 180° button spins you ⟶</small></div>
   <div class="btn fire" id="bfire">FIRE<span class="lbl">Hold</span></div>
   <div class="btn reload" id="breload">⟳<span class="lbl">Reload</span></div>
   <div class="btn swap" id="bswap"><svg width="40" height="22" viewBox="0 0 40 22"><path d="M2 6h26l2-3h4v5h-4v3H18l-2 2v7h-7l2-9H2z" fill="#fff"/></svg><span class="lbl">Swap</span></div>
@@ -35,7 +39,7 @@ export function buildHUD(root) {
   <div class="toast" id="toast"><span id="toastt"></span><small id="toasts"></small></div>
   <div class="portraitHint" id="phint">↻ Rotate for the best view<br><small>Portrait works too</small></div>
   </div><div id="screens"></div>`;
-  for (const id of ['hpbar', 'bpm', 'khp', 'kbar', 'objt', 'objs', 'progv', 'halflbl', 'boss', 'bossn', 'bossv', 'fingers', 'burgers', 'cokes', 'chipf', 'chipb', 'chipc', 'xh', 'hitm', 'lock', 'marker', 'floats', 'mag', 'res', 'wname', 'ammo', 'sub', 'rule', 'ruleh', 'rulet', 'toast', 'toastt', 'toasts', 'autofire', 'bmelee', 'bswap', 'bedpanico', 'callico', 'meleelbl', 'hud', 'screens', 'phint', 'portimg', 'resetv'])
+  for (const id of ['hpbar', 'bpm', 'khp', 'kbar', 'objt', 'objs', 'progv', 'halflbl', 'boss', 'bossn', 'bossv', 'fingers', 'burgers', 'cokes', 'chipf', 'chipb', 'chipc', 'xh', 'hitm', 'lock', 'marker', 'floats', 'mag', 'res', 'wname', 'ammo', 'sub', 'rule', 'ruleh', 'rulet', 'toast', 'toastt', 'toasts', 'autofire', 'bmelee', 'bswap', 'bedpanico', 'callico', 'meleelbl', 'hud', 'screens', 'phint', 'portimg', 'resetv', 'threats', 'hitdir', 'bturn', 'lookhint'])
     H[id] = root.querySelector('#' + id);
   H.bloodv = $('.bloodv'); H.lowhp = $('.lowhp'); H.monitor = $('.monitor');
 }

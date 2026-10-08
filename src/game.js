@@ -4,7 +4,7 @@ import { gunIcon, upgradeCfg } from './guns.js';
 import { E, render, trackFrame, setQuality, QUALITY, resize } from './engine.js';
 import { initAntiZoom, resetPageZoom, pageScale, ZOOM } from './antizoom.js';
 import { G } from './state.js';
-import { I, initInput, bindButton, pollKeyboard, resetInput, clearTouches } from './input.js';
+import { I, initInput, bindButton, pollKeyboard, resetInput, clearTouches, fireHeldByTouch, activeTouches } from './input.js';
 import { H, FINGER, buildHUD, showHUD, say, toast, rule, float, hitMarker, bump, hudTick, project, setText, setStyle, clearHudCache } from './hud.js';
 import { World, T, clearMats } from './world.js';
 import { LEVELS } from './levels.js';
@@ -18,7 +18,7 @@ import { A, initAudio, playMusic, stopMusic, sfx, setVolumes, suspendAudio } fro
 import { S, save, resetSave, up, SHOP } from './save.js';
 import { BARKS, KENNEDY, RULES } from './text.js';
 import { WEAPONS, ORDER } from './weapons.js';
-import { makeCharacter, makeZombie } from './chars.js';
+import { makeCharacter, makeZombie, LIB, CAST } from './chars.js';
 import { makeKweepie } from './kweepie.js';
 import { playCine, cineActive, cineTick, actor, cineInfo } from './story.js';
 import { bag, rand, randi, pick, clamp, lerp, angDiff } from './util.js';
@@ -51,7 +51,8 @@ export function initGame() {
   initInput(H.root); initFX(E.scene);
   G.player = new Player(); G.kennedy = new Kennedy(); G.kennedy.root.visible = false;
   // buttons
-  bindButton(document.getElementById('bfire'), () => { I.fire = true; }, () => { I.fire = false; });
+  bindButton(document.getElementById('bfire'), () => { I.fire = true; }, () => { if (!fireHeldByTouch()) I.fire = false; }); // a FIRE-held thumb may also be dragging to turn
+  bindButton(H.bturn, () => { I.pressed.turn180 = true; });
   bindButton(document.getElementById('breload'), () => { I.pressed.reload = true; });
   bindButton(document.getElementById('bswap'), () => { I.pressed.swap = true; });
   bindButton(document.getElementById('bmelee'), () => { I.pressed.melee = true; });
@@ -63,7 +64,7 @@ export function initGame() {
   G.onKill = onKill; G.onGib = () => { S.data.stats.gibs++; bark('gib', 1, 0.45); };
   G.onSnatch = z => { bark('snatch', 2); toast('BURGER THIEF!', `-${z.carry} 🍔 · kill him to get them back`, 2.6, true); };
   G.onReload = () => bark('reload', 1, 0.3);
-  G.onHurt = dmg => { if (G.player.hp < G.player.maxHp * 0.3 && lowHpT <= 0) { lowHpT = 12; bark('lowhp', 2); } else bark('hurt', 1, 0.18); showRule(2); };
+  G.onHurt = (dmg, src) => { hitFrom(src); if (G.player.hp < G.player.maxHp * 0.3 && lowHpT <= 0) { lowHpT = 12; bark('lowhp', 2); } else bark('hurt', 1, 0.18); showRule(2); };
   G.onPlayerDeath = onDeath; G.onSalts = () => { toast('SMELLING SALTS', 'Back on your feet, nurse', 2.5); say('SHAYLA', "Oh, I'm not dying on a Tuesday. Fuck that.", 3, 3); };
   G.onShoot = () => { }; G.onHitMarker = head => { hitMarker(head); };
   G.onBedpan = () => { bark('bedpan', 1, 0.5); showRule(9); };
@@ -228,7 +229,7 @@ export async function startLevel(i) {
   if (i === 0 && (S.data.introV || 0) < 2) { await runCine('intro'); S.data.seenIntro = true; S.data.introV = 2; save(); } // introV 2 = Oct 7 rewrite (plays once more for players who saw v1)
   if (i === 1 && !S.data.seenCall) { await runCine('kellyCall'); S.data.seenCall = true; save(); }
   if (L.id === 'home') { G.kennedy.arrive({ x: anc.kennedy.x, z: anc.kennedy.z }, anc.start.yaw); G.level.kennedyCalled = true; }
-  screen(''); showHUD(true); applySettings(); G.mode = 'play'; I.enabled = true; dirT = 1.5;
+  screen(''); showHUD(true); applySettings(); G.mode = 'play'; I.enabled = true; dirT = 1.5; THR.hit.l = THR.hit.r = THR.hit.t = THR.hit.b = 0; showLookHint();
   if (A.ctx) playMusic(L.music);
   setTimeout(() => { if (G.mode === 'play') { say('SHAYLA', bk.levelStart(), 3.6, 2); barkCd = 4; } }, 600);
   if (i === 0) setTimeout(() => showRule(1), 4000); if (i === 6) showRule(8); if (i === 7) setTimeout(() => showRule(10), 3000);
@@ -245,7 +246,9 @@ function spawnPoint(out) {
   const zones = G.level.anc.spawnZones; const pl = G.player; const fx = -Math.sin(pl.yaw), fz = -Math.cos(pl.yaw);
   for (let k = 0; k < 16; k++) {
     const z = pick(zones); const x = rand(z[0], z[2]), y = rand(z[1], z[3]); if (!G.world.isOpen(x, y)) continue; const dx = x - pl.pos.x, dz = y - pl.pos.z, d = Math.hypot(dx, dz); if (d < 9) continue;
-    const inView = (dx * fx + dz * fz) / d > 0.45 && d < 24; if (inView && k < 12) continue; return out.set(x, 0, y);
+    const dot = (dx * fx + dz * fz) / d; const inView = dot > 0.45 && d < 24; if (inView && k < 12) continue;
+    if (dot < -0.35 && d < 14 && k < 12) continue; // fairness: no fresh spawns right behind your back (they still flank and chase from behind)
+    return out.set(x, 0, y);
   }
   return null;
 }
@@ -369,7 +372,7 @@ function frame(dt) {
 function followSun() { const s = G.env.sun, p = G.player.pos; s.position.set(p.x + G.env.dir.x * 40, G.env.dir.y * 40, p.z + G.env.dir.z * 40); s.target.position.set(p.x, 0, p.z); }
 function update(dt) {
   G.time += dt; const L = G.level; L.t += dt; barkCd -= dt; lowHpT -= dt; multi.t -= dt;
-  pollKeyboard(); if (G.autopilot) autopilot(dt);
+  pollKeyboard(dt); if (G.autopilot) autopilot(dt);
   const p = G.player.update(dt); if (p.pause) { pause(true); return; }
   { const pp = G.player.pos; for (const z of Z.list) { if (!z.alive || z.dead || z.rise > 0.3 || z.hold) continue; const dx = pp.x - z.pos.x, dz = pp.z - z.pos.z, d2 = dx * dx + dz * dz, rr = 0.36 + 0.3 * z.scale; if (d2 < rr * rr && d2 > 1e-6) { const d = Math.sqrt(d2), k = (rr - d) / d; pp.x += dx * k; pp.z += dz * k; } } G.world.collide(pp, 0.35, 0.1, 1.7); }
   G.kennedy.update(dt); updateZombies(dt); if (L.boss && L.boss.update) L.boss.update(dt); for (const m of minions) m.update(dt);
@@ -406,7 +409,45 @@ function updateHUD(dt) {
   if (L.phase === 'exit' && L.anc.exit && L.def.id !== 'sequoyah') { const e = L.anc.exit; const s = project(tmp.set(e.x, 1.6, e.z), E.camera); let x = s.x, y = s.y; if (s.behind) { x = innerWidth - x; y = innerHeight - 40; } x = clamp(x, 40, innerWidth - 40); y = clamp(y, 60, innerHeight - 60); H.marker.style.display = 'block'; H.marker.style.left = x + 'px'; H.marker.style.top = y + 'px'; setText('marker', `${e.label} · ${Math.round(Math.hypot(G.player.pos.x - e.x, G.player.pos.z - e.z))}m`); }
   else H.marker.style.display = 'none';
   if (pl.loaned && pl.weapon === 'rifle') H.bswap.classList.remove('glow');
+  updateThreats(dt);
 }
+// ───────────────────────────── off-screen threat arrows + directional hit flash + look hint
+const THR = { shown: [], hit: { l: 0, r: 0, t: 0, b: 0 }, hintT: 0, hintOn: false };
+const thrV = new THREE.Vector3();
+function relBearing(x, z) { const pl = G.player; const a = Math.atan2(-(x - pl.pos.x), -(z - pl.pos.z)); return -angDiff(pl.yaw, a); } // 0 = ahead, + = to the right
+function hitFrom(src) {
+  if (!src || !src.pos) { THR.hit.b = Math.max(THR.hit.b, 0.5); return; }
+  const a = relBearing(src.pos.x, src.pos.z), sx = Math.sin(a), cz = Math.cos(a); G.player.lastHurtFrom = a;
+  THR.hit.r = Math.max(THR.hit.r, sx > 0.2 ? Math.min(1, sx + 0.2) : 0); THR.hit.l = Math.max(THR.hit.l, sx < -0.2 ? Math.min(1, -sx + 0.2) : 0);
+  THR.hit.b = Math.max(THR.hit.b, cz < -0.2 ? Math.min(1, -cz + 0.2) : 0); THR.hit.t = Math.max(THR.hit.t, cz > 0.5 ? 0.5 : 0);
+}
+function updateThreats(dt) {
+  const pl = G.player, cam = E.camera, W = innerWidth, Hh = innerHeight; const list = []; cam.updateMatrixWorld(); // camera was just re-aimed this frame
+  const cands = Z.list.filter(z => z.alive && !z.dead && !(z.rise > 0.5));
+  for (const z of cands) {
+    const d = Math.hypot(z.pos.x - pl.pos.x, z.pos.z - pl.pos.z); if (d > 15) continue;
+    thrV.set(z.pos.x, 1.2 * (z.scale || 1), z.pos.z).project(cam); const on = thrV.z < 1 && Math.abs(thrV.x) < 0.94 && Math.abs(thrV.y) < 0.94; if (on) continue;
+    list.push({ z, d, a: relBearing(z.pos.x, z.pos.z) });
+  }
+  list.sort((a, b) => a.d - b.d); THR.shown = list.slice(0, 8).map(t => ({ a: +t.a.toFixed(3), d: +t.d.toFixed(2) }));
+  const els = H.threats.children; const cx = W / 2, cy = Hh / 2, rx = W / 2 - 40, ry = Hh / 2 - 44; const danger = { l: 0, r: 0, t: 0, b: 0 };
+  for (let i = 0; i < els.length; i++) {
+    const e = els[i], t = list[i]; if (!t) { if (e.style.display !== 'none') e.style.display = 'none'; continue; }
+    const sx = Math.sin(t.a), sy = -Math.cos(t.a); // behind -> bottom of the screen
+    const k = 1 / Math.max(Math.abs(sx) / rx, Math.abs(sy) / ry); const x = cx + sx * k, y = cy + sy * k; // on the screen-edge rectangle (arrows never block touches: pointer-events none)
+    const close = t.d < 3.2; const sc = close ? 1.25 : 1 - Math.min(0.35, t.d / 40);
+    e.style.display = 'block'; e.style.opacity = (close ? 1 : Math.max(0.45, 1.1 - t.d / 15)).toFixed(2);
+    e.style.transform = `translate(${x.toFixed(1)}px,${y.toFixed(1)}px) rotate(${(Math.atan2(sy, sx) * 180 / Math.PI).toFixed(1)}deg) scale(${sc.toFixed(2)})`;
+    e.classList.toggle('close', close);
+    const w = Math.max(0, 1 - t.d / 7); if (w > 0) { if (sx > 0.35) danger.r = Math.max(danger.r, w * sx); if (sx < -0.35) danger.l = Math.max(danger.l, -w * sx); if (-sy < -0.35) danger.b = Math.max(danger.b, w * sy); }
+  }
+  const hd = H.hitdir.children; const h = THR.hit; const dec = Math.pow(0.02, dt);
+  for (const [i, k] of [[0, 'l'], [1, 'r'], [2, 't'], [3, 'b']]) { h[k] *= dec; if (h[k] < 0.02) h[k] = 0; hd[i].style.opacity = Math.max(h[k], danger[k] * 0.4).toFixed(2); } // hit flash + faint glow on the side something close is coming from
+  // look hint: until the player has actually turned a good amount this session
+  if (THR.hintOn && THR.hintDelay > 0) { THR.hintDelay -= dt; if (THR.hintDelay <= 0 && Math.abs(pl.lookYaw) < 1.2) H.lookhint.style.display = 'flex'; }
+  if (THR.hintOn) { THR.hintT -= dt; if (THR.hintT <= 0 || Math.abs(pl.lookYaw) > 1.2) { THR.hintOn = false; H.lookhint.style.opacity = '0'; setTimeout(() => { if (!THR.hintOn) H.lookhint.style.display = 'none'; }, 450); if (Math.abs(pl.lookYaw) > 1.2) S.data.lookedAround = (S.data.lookedAround || 0) + 1; } }
+}
+function showLookHint() { const touch = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window; if (!touch || (S.data.lookedAround || 0) >= 3) return; THR.hintOn = true; THR.hintT = 10.5; THR.hintDelay = 3.8; H.lookhint.style.display = 'none'; H.lookhint.style.opacity = '1'; } // waits for the shift toast / rotate tip to clear
 // ───────────────────────────── autopilot (automated playtesting) + test hooks
 function autopilot(dt) {
   const pl = G.player, L = G.level; I.move.x = I.move.y = 0; I.sprint = false;
@@ -425,7 +466,7 @@ function autopilot(dt) {
 }
 function testHooks() {
   return {
-    G, S, LEVELS, startLevel, titleScreen, Z, E, P,
+    G, S, LEVELS, startLevel, titleScreen, Z, E, P, LIB, CAST, makeCharacter, THREE,
     state: () => ({ mode: G.mode, level: G.levelIdx, phase: G.level && G.level.phase, kills: G.level && G.level.kills, quota: G.level && G.level.quota, hp: G.player && Math.round(G.player.hp), fps: Math.round(E.fps), dyn: E.dynScale, alive: aliveCount(), burgers: S.data.burgers, cokes: S.data.cokes, run: G.run, kennedy: G.kennedy && G.kennedy.active, boss: G.level && G.level.boss ? Math.round(G.level.boss.hp) : null, timeLeft: G.level && G.level.timeLeft }),
     autopilot(on = true) { G.autopilot = on; G.autoSkipCine = on ? 300 : 0; }, autoSkip(ms) { G.autoSkipCine = ms; },
     skipCine() { const e = document.getElementById('cineskip'); if (e) e.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); },
@@ -435,6 +476,7 @@ function testHooks() {
     hurtBoss(f = 0.5) { const b = G.level && G.level.boss; if (!b) return; if (b.z) { b.z.invuln = false; if (b.orbs) b.orbs.forEach(o => o.damage(9999)); b.z.damage(b.z.maxHp * f, 'chest', null, null, 'test'); } else b.damage(b.maxHp * f, 'chest', null, null); },
     spawn(beh = 'walker', x, z, opt = {}) { const zz = freeZombie(); if (zz) zz.spawn(new THREE.Vector3(x, 0, z), beh, opt); return !!zz; }, noDirector(on = true) { G.noDirector = on; },
     tp(x, z) { G.player.pos.set(x, 0, z); }, look(yaw, pitch = 0) { G.player.yaw = yaw; G.player.pitch = pitch; },
+    threats: () => THR.shown, hitDir: () => ({ ...THR.hit }), touches: () => activeTouches(), I,
     cine: name => runCine(name), cineInfo, resetView, ZOOM, pageScale, defaultFov() { const f = E.camera.fov; resize(); const d = E.camera.fov; E.camera.fov = f; E.camera.updateProjectionMatrix(); return d; }, forceZoom(fov = 25) { E.camera.fov = fov; E.camera.updateProjectionMatrix(); return E.camera.fov; }, camFov: () => E.camera.fov, pause, callKennedy, levelComplete, fast(on) { G.fast = on; }, substeps(n) { G.substeps = n; }, timeScale(n) { G.timeScale = n; }, step(dt = 1 / 60, n = 1) { for (let i = 0; i < n; i++) update(dt); }, shoot() { const pl = G.player, k = pl.weapon; pl.fire(pl.wstats(k), k); pl.cool = pl.wstats(k).rate; },
   };
 }
